@@ -1,0 +1,545 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #000;
+    color: #fff;
+    overflow: hidden;
+    cursor: default; /* Show cursor by default */
+}
+
+/* Experiment Container */
+#experiment-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Screen Base Styles */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: #000;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+    max-width: 800px;
+    text-align: center;
+    padding: 40px;
+    z-index: 10;
+}
+
+/* Typography */
+h1 {
+    font-size: 3em;
+    margin-bottom: 30px;
+    color: #fff;
+}
+
+h2 {
+    font-size: 2.5em;
+    margin-bottom: 25px;
+    color: #fff;
+}
+
+p {
+    font-size: 1.2em;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #ddd;
+}
+
+/* Buttons */
+.primary-button, .secondary-button, .continue-button {
+    font-size: 1.3em;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    margin: 10px;
+}
+
+.primary-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.primary-button:hover {
+    background-color: #45a049;
+    transform: translateY(-2px);
+}
+
+.secondary-button {
+    background-color: #666;
+    color: white;
+}
+
+.secondary-button:hover {
+    background-color: #777;
+    transform: translateY(-2px);
+}
+
+.continue-button {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #2196F3;
+    color: white;
+    z-index: 100;
+}
+
+.continue-button:hover {
+    background-color: #1976D2;
+}
+
+/* Form Styles */
+form {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #fff;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 1.1em;
+    border: 2px solid #666;
+    border-radius: 5px;
+    background-color: #333;
+    color: #fff;
+}
+
+input[type="text"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+/* Calibration Screen */
+#calibration-area {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+}
+
+.calibration-dot {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: #ff4444;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    cursor: crosshair;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.calibration-dot:hover {
+    transform: scale(1.5);
+    background-color: #ff6666;
+}
+
+.calibration-dot.completed {
+    background-color: #4CAF50;
+    transform: scale(0.8);
+}
+
+#calibration-progress {
+    position: absolute;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5em;
+    color: #fff;
+    z-index: 15;
+}
+
+/* Experiment Screen */
+#experiment-screen {
+    background-color: #000;
+}
+
+/* Progress Indicator */
+#progress-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 1.5em;
+    color: #fff;
+    z-index: 200; /* Higher z-index to stay above MouseView */
+    background-color: rgba(0, 0, 0, 0.9); /* More opaque background */
+    padding: 10px 15px;
+    border-radius: 5px;
+    opacity: 1; /* Always fully visible */
+    pointer-events: none; /* Don't interfere with mouse tracking */
+    font-weight: bold;
+}
+
+/* Fixation Cross */
+.fixation-cross {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4em;
+    color: #fff;
+    font-weight: bold;
+    z-index: 300; /* Higher than MouseView and UI elements */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    display: none;
+    pointer-events: none; /* Don't interfere with mouse tracking */
+}
+
+.fixation-cross.active {
+    display: block;
+}
+
+/* Ensure fixation cross only appears in experiment screen */
+#experiment-screen .fixation-cross.active {
+    display: block;
+}
+
+/* Hide fixation cross in all other screens */
+#welcome-screen .fixation-cross,
+#participant-screen .fixation-cross,
+#calibration-screen .fixation-cross,
+#transition-screen .fixation-cross,
+#loading-screen .fixation-cross,
+#end-screen .fixation-cross {
+    display: none !important;
+}
+
+/* Image Container */
+#image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Stimulus Images */
+.stimulus-image {
+    position: absolute;
+    max-width: 380px;
+    max-height: 260px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    z-index: 10;
+    display: none;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    margin: 10px;
+    filter: blur(8px);
+}
+
+.stimulus-image.active {
+    display: block;
+}
+
+.stimulus-image:hover {
+    filter: blur(0px);
+    transform: scale(1.02);
+}
+
+/* Convert normalized coordinates to CSS positions with increased vertical spacing */
+#top-left-image {
+    top: 15%;
+    left: 20%;
+}
+
+#top-right-image {
+    top: 15%;
+    right: 20%;
+}
+
+#bottom-left-image {
+    bottom: 15%;
+    left: 20%;
+}
+
+#bottom-right-image {
+    bottom: 15%;
+    right: 20%;
+}
+
+/* Image Labels (for debugging) */
+.image-labels {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.image-label {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-weight: bold;
+    display: none; /* Hide by default */
+}
+
+.image-label.show-labels {
+    display: block;
+}
+
+/* Position labels near their corresponding images */
+#top-left-label {
+    top: 10%;
+    left: 10%;
+}
+
+#top-right-label {
+    top: 10%;
+    right: 10%;
+}
+
+#bottom-left-label {
+    bottom: 25%;
+    left: 10%;
+}
+
+#bottom-right-label {
+    bottom: 25%;
+    right: 10%;
+}
+
+/* Loading Screen */
+#loading-screen {
+    background-color: #111;
+    z-index: 1000; /* Ensure loading screen stays on top */
+}
+
+#loading-screen .content-wrapper {
+    z-index: 1001; /* Ensure loading content stays on top */
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #333;
+    border-top: 5px solid #4CAF50;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loading-message {
+    font-size: 1.1em;
+    color: #aaa;
+}
+
+/* Download Buttons */
+#download-buttons {
+    margin: 30px 0;
+}
+
+#download-buttons button {
+    margin: 10px;
+}
+
+/* Instructions Styling */
+.instructions {
+    text-align: left;
+    margin: 30px 0;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border-left: 4px solid #4CAF50;
+}
+
+.instructions p {
+    margin-bottom: 15px;
+}
+
+.instructions strong {
+    color: #4CAF50;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .stimulus-image {
+        max-width: 300px;
+        max-height: 210px;
+    }
+    
+    h1 {
+        font-size: 2.5em;
+    }
+    
+    h2 {
+        font-size: 2em;
+    }
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 20px;
+        max-width: 90%;
+    }
+    
+    .stimulus-image {
+        max-width: 220px;
+        max-height: 150px;
+        padding: 3px;
+    }
+    
+    /* Adjust positioning for smaller screens */
+    #top-left-image {
+        top: 12%;
+        left: 15%;
+    }
+
+    #top-right-image {
+        top: 12%;
+        right: 15%;
+    }
+
+    #bottom-left-image {
+        bottom: 12%;
+        left: 15%;
+    }
+
+    #bottom-right-image {
+        bottom: 12%;
+        right: 15%;
+    }
+    
+    .fixation-cross {
+        font-size: 3em;
+    }
+    
+    #progress-indicator {
+        top: 10px;
+        right: 10px;
+        font-size: 1.2em;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Center Button Styles */
+.center-button {
+    position: relative;
+    z-index: 400; /* Higher than MouseView overlay */
+}
+
+.start-button, .next-button {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2em;
+    padding: 20px 40px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    font-weight: bold;
+    margin-bottom: 0;
+    min-width: 150px;
+}
+
+.start-button {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.start-button:hover {
+    background-color: #45a049;
+    transform: translate(-50%, -50%) translateY(-2px);
+}
+
+.next-button {
+    background-color: #2196F3;
+    color: white;
+}
+
+.next-button:hover {
+    background-color: #1976D2;
+    transform: translate(-50%, -50%) translateY(-2px);
+}
+
+.button-instruction {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(-50% + 80px));
+    font-size: 1em;
+    color: #ddd;
+    font-style: italic;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Hide cursor during experiment trials */
+body.experiment-active {
+    cursor: none;
+}
+
+body.experiment-active * {
+    cursor: none !important;
+}
+
+/* But show cursor on center buttons */
+body.experiment-active .center-button {
+    cursor: pointer !important;
+}
+
+body.experiment-active .center-button * {
+    cursor: pointer !important;
+}

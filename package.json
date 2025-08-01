@@ -1,0 +1,43 @@
+{
+  "name": "free-viewing-task",
+  "version": "1.0.0",
+  "description": "Web-based psychological experiment using mouse spotlight to simulate eye tracking",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "serve": "npx live-server --port=8000",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/szelingtan/free-viewing-task.git"
+  },
+  "keywords": [
+    "psychology",
+    "experiment",
+    "eye-tracking",
+    "mouse-tracking",
+    "research",
+    "mouseview",
+    "attention",
+    "emotional-images",
+    "free-viewing",
+    "web-experiment"
+  ],
+  "author": "szelingtan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/szelingtan/free-viewing-task/issues"
+  },
+  "homepage": "https://github.com/szelingtan/free-viewing-task#readme",
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}

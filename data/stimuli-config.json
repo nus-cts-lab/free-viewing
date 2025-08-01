@@ -1,0 +1,152 @@
+{
+  "config": {
+    "numImageTrials": 12,
+    "numFillerItems": 8,
+    "fixationDuration": 2000,
+    "imageViewingTime": 15000,
+    "positions": [
+      {"name": "top-left", "x": -0.3, "y": 0.2},
+      {"name": "top-right", "x": 0.3, "y": 0.2},
+      {"name": "bottom-left", "x": -0.3, "y": -0.2},
+      {"name": "bottom-right", "x": 0.3, "y": -0.2}
+    ]
+  },
+  "imageTrials": [
+    {
+      "dysphoric": "original/2141.jpg",
+      "threat": "original/1120.jpg",
+      "positive": "original/1340.jpg",
+      "neutral": "original/2038.jpg"
+    },
+    {
+      "dysphoric": "original/2205.jpg",
+      "threat": "original/1300.jpg",
+      "positive": "original/2091.jpg",
+      "neutral": "original/2102.jpg"
+    },
+    {
+      "dysphoric": "original/2276.jpg",
+      "threat": "original/2811.jpg",
+      "positive": "original/2165.jpg",
+      "neutral": "original/2393.jpg"
+    },
+    {
+      "dysphoric": "original/2455.jpg",
+      "threat": "original/1050.jpg",
+      "positive": "original/2208.jpg",
+      "neutral": "original/2397.jpg"
+    },
+    {
+      "dysphoric": "original/2700.jpg",
+      "threat": "original/6260.jpg",
+      "positive": "original/2224.jpg",
+      "neutral": "original/2745.1.jpg"
+    },
+    {
+      "dysphoric": "original/2703.jpg",
+      "threat": "original/6312.jpg",
+      "positive": "original/2299.jpg",
+      "neutral": "original/2850.jpg"
+    },
+    {
+      "dysphoric": "original/2799.jpg",
+      "threat": "original/6313.jpg",
+      "positive": "original/2339.jpg",
+      "neutral": "original/5500.jpg"
+    },
+    {
+      "dysphoric": "original/2900.jpg",
+      "threat": "original/6350.jpg",
+      "positive": "original/2340.jpg",
+      "neutral": "original/5731.jpg"
+    },
+    {
+      "dysphoric": "original/3230.jpg",
+      "threat": "original/6510.jpg",
+      "positive": "original/2501.jpg",
+      "neutral": "original/7009.jpg"
+    },
+    {
+      "dysphoric": "original/9220.jpg",
+      "threat": "original/6550.jpg",
+      "positive": "original/4599.jpg",
+      "neutral": "original/7041.jpg"
+    },
+    {
+      "dysphoric": "original/9421.jpg",
+      "threat": "original/6562.jpg",
+      "positive": "original/4700.jpg",
+      "neutral": "original/7080.jpg"
+    },
+    {
+      "dysphoric": "original/9530.jpg",
+      "threat": "original/6821.jpg",
+      "positive": "original/4610.jpg",
+      "neutral": "original/7185.jpg"
+    }
+  ],
+  "practiceTrials": [
+    {
+      "dysphoric": "original/2000.jpg",
+      "threat": "original/1110.jpg", 
+      "positive": "original/1600.jpg",
+      "neutral": "original/2100.jpg"
+    },
+    {
+      "dysphoric": "original/2250.jpg",
+      "threat": "original/1200.jpg",
+      "positive": "original/1500.jpg", 
+      "neutral": "original/2400.jpg"
+    }
+  ],
+  "neutralFillers": [
+    {
+      "filler1": "filler/2235.jpg",
+      "filler2": "filler/7006.jpg",
+      "filler3": "filler/7010.jpg",
+      "filler4": "filler/5760.jpg"
+    },
+    {
+      "filler1": "filler/2396.jpg",
+      "filler2": "filler/7020.jpg",
+      "filler3": "filler/7053.jpg",
+      "filler4": "filler/5781.jpg"
+    },
+    {
+      "filler1": "filler/2514.jpg",
+      "filler2": "filler/7059.jpg",
+      "filler3": "filler/7090.jpg",
+      "filler4": "filler/5779.jpg"
+    },
+    {
+      "filler1": "filler/2880.jpg",
+      "filler2": "filler/5700.jpg",
+      "filler3": "filler/7100.jpg",
+      "filler4": "filler/7055.jpg"
+    },
+    {
+      "filler1": "filler/5390.jpg",
+      "filler2": "filler/5711.jpg",
+      "filler3": "filler/7187.jpg",
+      "filler4": "filler/7042.jpg"
+    },
+    {
+      "filler1": "filler/5740.jpg",
+      "filler2": "filler/5764.jpg",
+      "filler3": "filler/7235.jpg",
+      "filler4": "filler/7052.jpg"
+    },
+    {
+      "filler1": "filler/7000.jpg",
+      "filler2": "filler/5780.jpg",
+      "filler3": "filler/7547.jpg",
+      "filler4": "filler/7058.jpg"
+    },
+    {
+      "filler1": "filler/7004.jpg",
+      "filler2": "filler/5750.jpg",
+      "filler3": "filler/7950.jpg",
+      "filler4": "filler/7056.jpg"
+    }
+  ]
+}

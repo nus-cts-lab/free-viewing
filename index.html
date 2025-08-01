@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Images Free Viewing Task - MouseView</title>
+    <link rel="stylesheet" href="css/experiment.css">
+    <link rel="stylesheet" href="css/mouseview.css">
+    <style>
+        .hide-during-practice {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        #progress-indicator.hide-during-practice {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            z-index: -1 !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="experiment-container">
+        
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <div class="content-wrapper">
+                <h1>Welcome!</h1>
+                <div class="instructions">
+                    <p>In this experiment, you will view a series of images using your mouse cursor as a "spotlight" of attention. Only the area around your cursor will be visible clearly, while other areas will be blurred.</p>
+                    
+                    <p>First, you will complete a practice trial to familiarize yourself with the task. Then you will proceed to the main experiment with multiple trials.</p>
+                    
+                    <p>Each trial begins with a fixation cross (+) in the center. Focus your mouse cursor on this cross. Then, four images will appear in the corners of the screen for 15 seconds each.</p>
+                    
+                    <p><strong>Important:</strong> Move your mouse cursor naturally to explore the images, just as you would move your eyes to look at different parts of the images.</p>
+                    
+                    <p>When you are ready, press <strong>SPACEBAR</strong> to begin.</p>
+                </div>
+                <button id="start-experiment" class="primary-button">Press SPACE to Begin</button>
+            </div>
+        </div>
+
+        <!-- Participant Info Screen -->
+        <div id="participant-screen" class="screen">
+            <div class="content-wrapper">
+                <h2>Participant Information</h2>
+                <form id="participant-form">
+                    <div class="form-group">
+                        <label for="participant-id">Participant ID:</label>
+                        <input type="text" id="participant-id" name="participant-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="session">Session:</label>
+                        <input type="text" id="session" name="session" value="001" required>
+                    </div>
+                    <button type="submit" class="primary-button">Continue to Practice</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Practice Screen -->
+        <div id="practice-screen" class="screen">
+            <div class="content-wrapper">
+                <h2>Practice Trial</h2>
+                <p id="practice-instructions">Let's practice! You'll see 4 images arranged in different positions. Move your mouse cursor to look at the images - it acts as your "spotlight" of attention. There's no right or wrong way to look. Just explore the images naturally.</p>
+                <p id="practice-progress">Preparing practice trial...</p>
+            </div>
+            <button id="skip-practice" class="secondary-button">Skip Practice</button>
+        </div>
+
+        <!-- Main Experiment Screen -->
+        <div id="experiment-screen" class="screen">
+            <!-- Fixation Cross -->
+            <div id="fixation-cross" class="fixation-cross">+</div>
+            
+            <!-- Center Start Button for Practice -->
+            <div id="practice-start-button" class="center-button" style="display: none;">
+                <button class="start-button">Start</button>
+                <p class="button-instruction">Click to start practice</p>
+            </div>
+            
+            <!-- Center Start Button for First Main Trial -->
+            <div id="main-start-button" class="center-button" style="display: none;">
+                <button class="start-button">Start</button>
+                <p class="button-instruction">Click to start first trial</p>
+            </div>
+            
+            <!-- Center Next Button for Between Trials -->
+            <div id="next-trial-button" class="center-button" style="display: none;">
+                <button class="next-button">Next</button>
+                <p class="button-instruction">Click to continue to next trial</p>
+            </div>
+            
+            <!-- Progress Indicator -->
+            <div id="progress-indicator">
+                <span id="current-trial">1</span> / <span id="total-trials">20</span>
+            </div>
+            
+            <!-- Practice Indicator -->
+            <div id="practice-indicator" style="display: none; position: absolute; top: 20px; right: 20px; background: rgba(255, 165, 0, 0.9); color: white; padding: 10px 15px; border-radius: 5px; font-weight: bold; z-index: 1000;">
+                Practice Round
+            </div>
+            
+            <!-- Image Container -->
+            <div id="image-container">
+                <img id="top-left-image" class="stimulus-image" alt="Top Left Image">
+                <img id="top-right-image" class="stimulus-image" alt="Top Right Image">
+                <img id="bottom-left-image" class="stimulus-image" alt="Bottom Left Image">
+                <img id="bottom-right-image" class="stimulus-image" alt="Bottom Right Image">
+                
+                <!-- Image category labels (for debugging - can be hidden) -->
+                <div class="image-labels">
+                    <span id="top-left-label" class="image-label">Dysphoric</span>
+                    <span id="top-right-label" class="image-label">Threat</span>
+                    <span id="bottom-left-label" class="image-label">Positive</span>
+                    <span id="bottom-right-label" class="image-label">Neutral</span>
+                </div>
+            </div>
+            
+            <!-- Continue Button (for manual progression) -->
+            <button id="continue-trial" class="continue-button" style="display: none;">Continue to Next Trial</button>
+        </div>
+
+        <!-- Transition Screen (between practice and main experiment) -->
+        <div id="transition-screen" class="screen">
+            <div class="content-wrapper">
+                <h2>Ready for Main Experiment</h2>
+                <div class="instructions">
+                    <p>Great job with the practice!</p>
+                    <p>You are now ready to begin the main experiment.</p>
+                    <p>Each trial lasts 15 seconds. Move your mouse naturally to look at the images.</p>
+                    <p>When you're ready, press <strong>SPACEBAR</strong> or click the button below to begin.</p>
+                </div>
+                <button id="start-main-experiment" class="primary-button">Start Main Experiment</button>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="screen">
+            <div class="content-wrapper">
+                <h2>Experiment Complete!</h2>
+                <p>Thank you for participating in this experiment.</p>
+                <p>Your data has been collected and will be downloaded automatically.</p>
+                <p><strong>Click the buttons below to download your data and individual trial heatmaps.</strong></p>
+                <div id="download-buttons">
+                    <button id="download-trial-data" class="primary-button">Download Trial Data</button>
+                    <button id="download-mouse-data" class="primary-button">Download Mouse Data</button>
+                    <button id="download-trial-heatmaps" class="primary-button">Download Trial Heatmaps (ZIP)</button>
+                </div>
+                <div id="heatmap-progress" style="display: none; margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 5px;">
+                    <div style="margin-bottom: 10px; font-weight: bold;" id="heatmap-progress-text">Generating heatmaps...</div>
+                    <div style="background: #ddd; height: 20px; border-radius: 10px; overflow: hidden;">
+                        <div id="heatmap-progress-bar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
+                    </div>
+                </div>
+                <button id="restart-experiment" class="secondary-button">Restart Experiment</button>
+            </div>
+        </div>
+
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen">
+            <div class="content-wrapper">
+                <h2>Loading...</h2>
+                <div class="loading-spinner"></div>
+                <p id="loading-message">Preparing experiment...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MouseView Overlay -->
+    <div id="mouseview-overlay" class="mouseview-overlay"></div>
+
+    <!-- Scripts -->
+    <!-- JSZip library for creating ZIP files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Official MouseView.js library -->
+    <script src="https://mouseview-docs.netlify.app/MouseView.js" type="module"></script>
+    <!-- Your custom scripts -->
+    <script src="js/data-manager.js?v=2025-07-28-fix"></script>
+    <script src="js/image-manager.js?v=2025-07-28-fix"></script>
+    <script src="js/practice-manager.js?v=2025-07-28-fix"></script>
+    <script src="js/experiment.js?v=2025-07-28-fix"></script>
+
+    <script type="module">
+        // Configure MouseView.js parameters and initialize experiment
+        window.addEventListener('load', () => {
+            // Basic MouseView.js initialization (configuration happens only during trials)
+            if (typeof mouseview !== 'undefined') {
+                // Only set basic timing parameters globally
+                mouseview.timing.sampleRate = 16.66; // ~60Hz sampling rate
+                mouseview.params.overlayGaussian = 0; // Disable overlay blur for performance
+                
+                console.log('MouseView.js basic initialization complete');
+            }
+            
+            // Initialize your experiment
+            const experiment = new ExperimentController();
+            experiment.init();
+        });
+    </script>
+</body>
+</html>
