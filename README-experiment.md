@@ -5,12 +5,11 @@ Web-based psychological experiment using mouse spotlight to simulate eye trackin
 ## Features
 
 - **Mouse spotlight**: Dark overlay with transparent circle following cursor
-- **20 trials**: 12 image trials (4 emotional categories) + 8 neutral fillers
+- **20 main trials**: 12 image trials (4 emotional categories) + 8 neutral fillers
 - **Practice phase**: Single trial with real images from stimulus set
 - **Data export**: Trial data, mouse tracking, and heatmaps
-- **Research-grade**: Replicates PsychoPy experiment data structure
 
-## Quick Start
+## Quick Start (Local Dev)
 
 1. **Start local server** (required for CORS):
 
@@ -57,14 +56,13 @@ Web-based psychological experiment using mouse spotlight to simulate eye trackin
 
 ## Controls & Configuration
 
-**Keyboard**: SPACE (start/continue), ESC (emergency exit), Ctrl+D (debug mode)
+**Keyboard**: SPACE (start/continue), ESC (emergency exit),
 
 **Configuration** (`stimuli-config.json`): Modify image sets, trial count, timing parameters
 
 **Settings** (`experiment.js`):
 
 ```javascript
-fixationDuration: 2000,     // Fixation cross (ms)
 imageViewingTime: 15000,    // Auto-advance time (ms)
 enableMouseTracking: true   // Mouse data collection
 ```
@@ -85,5 +83,3 @@ Non-Automatic download
 **Images not loading**: Use local server (`python3 -m http.server 8000`), check image paths in `images/original/` and `images/filler/`
 
 **Data not downloading**: Click download buttons manually, check Downloads folder
-
-**Performance issues**: Enable browser hardware acceleration, use wired mouse, close other applications
