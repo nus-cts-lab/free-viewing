@@ -178,7 +178,7 @@ label {
     color: #fff;
 }
 
-input[type="text"] {
+input[type="text"], input[type="email"] {
     width: 100%;
     padding: 10px;
     font-size: 1.1em;
@@ -188,7 +188,7 @@ input[type="text"] {
     color: #fff;
 }
 
-input[type="text"]:focus {
+input[type="text"]:focus, input[type="email"]:focus {
     outline: none;
     border-color: #4CAF50;
 }
