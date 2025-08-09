@@ -32,10 +32,11 @@ class DataManager {
         return Math.floor(Math.random() * 999999).toString().padStart(6, '0');
     }
     
-    setParticipantInfo(participantId, session = '001') {
+    setParticipantInfo(participantId, participantEmail, session = '001') {
         this.participantData.participant_id = participantId;
+        this.participantData.participant_email = participantEmail;
         this.participantData.session = session;
-        console.log('Participant info updated:', participantId, session);
+        console.log('Participant info updated:', participantId, participantEmail, session);
     }
     
     startExperiment() {
@@ -462,6 +463,149 @@ class DataManager {
         return Math.round(Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2)));
     }
     
+    // === EMAIL SENDING FUNCTIONALITY ===
+    
+    /**
+     * Send experiment data to researcher via email (with optional heatmap link)
+     */
+    async sendDataToResearcher(heatmapUploadResult = null) {
+        console.log('=== EMAIL SENDING DEBUG ===');
+        
+        if (!window.EMAIL_CONFIG) {
+            console.error('EmailJS not configured. Please set up EMAIL_CONFIG in index.html');
+            throw new Error('EmailJS configuration missing');
+        }
+        
+        if (!window.emailjs) {
+            console.error('EmailJS library not loaded');
+            throw new Error('EmailJS library not available');
+        }
+        
+        try {
+            // Prepare CSV data
+            const trialCSV = this.getTrialDataCSV();
+            const mouseCSV = this.getMouseDataCSV();
+            
+            // Check data size (EmailJS has size limitations)
+            const totalSize = (trialCSV.length + mouseCSV.length) / 1024; // KB
+            console.log(`Email data size: ${totalSize.toFixed(2)} KB`);
+            
+            if (totalSize > 8000) { // 8MB limit for most email providers
+                console.warn('Data too large for email. Consider file upload service.');
+            }
+            
+            // Prepare email template parameters (only variables used in template)
+            const templateParams = {
+                participant_id: this.participantData.participant_id,
+                participant_email: this.participantData.participant_email,
+                session: this.participantData.session,
+                experiment_date: new Date().toLocaleDateString(),
+                experiment_time: new Date().toLocaleTimeString(),
+                trial_data_csv: trialCSV,
+                mouse_data_csv: mouseCSV,
+                researcher_email: window.EMAIL_CONFIG.researcherEmail
+            };
+            
+            // Add heatmap information if available
+            if (heatmapUploadResult && heatmapUploadResult.success) {
+                templateParams.heatmap_available = true;
+                templateParams.heatmap_download_url = heatmapUploadResult.downloadUrl;
+                templateParams.heatmap_filename = heatmapUploadResult.filename;
+                templateParams.heatmap_file_size = this.formatFileSize(heatmapUploadResult.fileSize);
+                templateParams.heatmap_expiry_days = heatmapUploadResult.expiryDays;
+                templateParams.link_expiry_date = this.formatExpiryDate(heatmapUploadResult.expiryDays);
+            } else {
+                templateParams.heatmap_available = false;
+                templateParams.heatmap_download_url = '';
+                templateParams.heatmap_filename = 'Heatmap generation failed';
+                templateParams.heatmap_file_size = 'N/A';
+                templateParams.heatmap_expiry_days = 0;
+                templateParams.link_expiry_date = 'N/A';
+            }
+            
+            console.log('Sending email with template params:', {
+                participant_id: templateParams.participant_id,
+                session: templateParams.session,
+                data_size_kb: totalSize.toFixed(2),
+                heatmap_available: templateParams.heatmap_available || false,
+                heatmap_url: templateParams.heatmap_available ? 'YES' : 'NO'
+            });
+            
+            // Send email via EmailJS
+            const response = await emailjs.send(
+                window.EMAIL_CONFIG.serviceID,
+                window.EMAIL_CONFIG.templateID,
+                templateParams
+            );
+            
+            console.log('Email sent successfully:', response);
+            console.log('=== END EMAIL SENDING DEBUG ===');
+            
+            return {
+                success: true,
+                message: 'Data sent successfully to researcher',
+                emailId: response.text
+            };
+            
+        } catch (error) {
+            console.error('Failed to send email:', error);
+            console.log('=== END EMAIL SENDING DEBUG ===');
+            
+            return {
+                success: false,
+                message: 'Failed to send data via email: ' + error.message,
+                error: error
+            };
+        }
+    }
+    
+    /**
+     * Format file size in human readable format
+     */
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    /**
+     * Format expiry date (14 days from now)
+     */
+    formatExpiryDate(daysFromNow) {
+        const date = new Date();
+        date.setDate(date.getDate() + daysFromNow);
+        return date.toLocaleDateString();
+    }
+    
+    /**
+     * Get trial data as CSV string (for email)
+     */
+    getTrialDataCSV() {
+        // Filter out internal fields for CSV export
+        const excludeFields = ['_trial_start_time', '_trial_end_time', '_trial_duration', '_relative_start_time'];
+        
+        const filteredTrialData = this.trialData.map(trial => {
+            const filtered = {};
+            Object.keys(trial).forEach(key => {
+                if (!key.startsWith('_') && !excludeFields.includes(key)) {
+                    filtered[key] = trial[key];
+                }
+            });
+            return filtered;
+        });
+        
+        return this.convertToCSV(filteredTrialData);
+    }
+    
+    /**
+     * Get mouse data as CSV string (for email)
+     */
+    getMouseDataCSV() {
+        return this.convertToCSV(this.mouseTrackingData);
+    }
+    
     // Data export functions
     
     exportTrialData() {
@@ -853,6 +997,205 @@ class DataManager {
         const trialNum = metadata.trial_idx.toString().padStart(2, '0');
         const trialType = metadata.trial_type;
         return `trial_${trialNum}_${trialType}_heatmap.png`;
+    }
+    
+    /**
+     * Upload file to File.io and get shareable download link
+     */
+    async uploadToFileIO(blob, filename) {
+        console.log('=== FILE.IO UPLOAD DEBUG ===');
+        console.log('Uploading file:', filename);
+        console.log('File size:', (blob.size / 1024 / 1024).toFixed(2), 'MB');
+        
+        try {
+            const formData = new FormData();
+            formData.append('file', blob, filename);
+            
+            // File.io API call
+            const response = await fetch('https://file.io/', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`File.io upload failed: ${response.status} ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            
+            console.log('File.io response:', result);
+            
+            if (result.success) {
+                console.log('✓ File uploaded successfully');
+                console.log('Download URL:', result.link);
+                console.log('File expires in 14 days');
+                console.log('=== END FILE.IO UPLOAD DEBUG ===');
+                
+                return {
+                    success: true,
+                    downloadUrl: result.link,
+                    filename: filename,
+                    fileSize: blob.size,
+                    expiryDays: 14,
+                    message: 'File uploaded successfully to File.io'
+                };
+            } else {
+                throw new Error('File.io returned success: false');
+            }
+            
+        } catch (error) {
+            console.error('File.io upload error:', error);
+            console.log('=== END FILE.IO UPLOAD DEBUG ===');
+            
+            return {
+                success: false,
+                error: error.message,
+                downloadUrl: null,
+                message: 'Failed to upload file to File.io'
+            };
+        }
+    }
+    
+    /**
+     * Generate heatmaps for all trials, create ZIP, and upload to File.io
+     */
+    async generateAllTrialHeatmapsWithUpload(onProgress = null) {
+        console.log('Starting heatmap generation with File.io upload...');
+        
+        try {
+            // Generate the ZIP file locally first
+            const zipResult = await this.generateAllTrialHeatmaps(onProgress);
+            
+            if (!zipResult || zipResult.errors > 0) {
+                console.warn('Heatmap generation had errors, proceeding with upload anyway');
+            }
+            
+            if (onProgress) {
+                onProgress(100, 100, 'Uploading heatmaps to cloud storage...');
+            }
+            
+            // Get the generated ZIP blob (we need to modify generateAllTrialHeatmaps to return the blob)
+            const filename = `trial_heatmaps_${this.participantData.participant_id}_${this.getTimestamp()}.zip`;
+            
+            // We'll need to modify generateAllTrialHeatmaps to return the ZIP blob instead of auto-downloading
+            // For now, let's create a separate method that generates and returns the blob
+            const zipBlob = await this.generateHeatmapZipBlob(onProgress);
+            
+            if (!zipBlob) {
+                throw new Error('Failed to generate heatmap ZIP blob');
+            }
+            
+            // Upload to File.io
+            const uploadResult = await this.uploadToFileIO(zipBlob, filename);
+            
+            if (uploadResult.success) {
+                console.log('✓ Heatmaps uploaded successfully to File.io');
+                return {
+                    success: true,
+                    downloadUrl: uploadResult.downloadUrl,
+                    filename: uploadResult.filename,
+                    fileSize: uploadResult.fileSize,
+                    expiryDays: uploadResult.expiryDays
+                };
+            } else {
+                console.error('✗ Failed to upload heatmaps to File.io');
+                return {
+                    success: false,
+                    error: uploadResult.error,
+                    message: uploadResult.message
+                };
+            }
+            
+        } catch (error) {
+            console.error('Error in heatmap generation and upload:', error);
+            return {
+                success: false,
+                error: error.message,
+                message: 'Failed to generate and upload heatmaps'
+            };
+        }
+    }
+    
+    /**
+     * Generate heatmap ZIP as blob (without auto-download)
+     */
+    async generateHeatmapZipBlob(onProgress = null) {
+        console.log('Generating heatmap ZIP blob...');
+        
+        if (typeof JSZip === 'undefined') {
+            throw new Error('JSZip library not loaded');
+        }
+        
+        const zip = new JSZip();
+        const totalTrials = this.trialData.length;
+        let successCount = 0;
+        let errorCount = 0;
+        
+        // Create metadata file for the ZIP
+        const summaryData = {
+            participant_id: this.participantData.participant_id,
+            generation_date: new Date().toISOString(),
+            total_trials: totalTrials,
+            heatmaps_generated: 0,
+            trial_info: []
+        };
+        
+        for (let i = 0; i < totalTrials; i++) {
+            try {
+                if (onProgress) {
+                    const progressPercent = Math.round((i / totalTrials) * 80); // 0-80% for heatmap generation
+                    onProgress(i + 1, totalTrials, `Generating heatmap for trial ${i + 1}...`);
+                }
+                
+                const heatmapData = await this.generateTrialHeatmap(i);
+                
+                if (heatmapData) {
+                    // Add image to ZIP
+                    zip.file(heatmapData.filename, heatmapData.blob);
+                    
+                    // Add to summary
+                    summaryData.trial_info.push({
+                        trial_idx: heatmapData.metadata.trial_idx,
+                        trial_type: heatmapData.metadata.trial_type,
+                        filename: heatmapData.filename,
+                        mouse_points: heatmapData.metadata.mouse_points,
+                        duration_ms: heatmapData.metadata.duration
+                    });
+                    
+                    successCount++;
+                    console.log(`✓ Generated heatmap for trial ${i + 1}`);
+                } else {
+                    errorCount++;
+                    console.warn(`✗ Failed to generate heatmap for trial ${i + 1}`);
+                }
+                
+                // Small delay to prevent overwhelming the browser
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+            } catch (error) {
+                console.error(`Error processing trial ${i + 1}:`, error);
+                errorCount++;
+            }
+        }
+        
+        // Update summary with final counts
+        summaryData.heatmaps_generated = successCount;
+        summaryData.errors = errorCount;
+        
+        // Add summary file to ZIP
+        zip.file('heatmap_summary.json', JSON.stringify(summaryData, null, 2));
+        
+        if (onProgress) {
+            onProgress(totalTrials, totalTrials, 'Creating ZIP file...');
+        }
+        
+        // Generate ZIP blob (don't download)
+        const zipBlob = await zip.generateAsync({type: 'blob'});
+        
+        console.log(`Heatmap ZIP blob generated: ${successCount} success, ${errorCount} errors`);
+        console.log(`ZIP size: ${(zipBlob.size / 1024 / 1024).toFixed(2)} MB`);
+        
+        return zipBlob;
     }
     
     /**

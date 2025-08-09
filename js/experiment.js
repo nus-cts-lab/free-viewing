@@ -96,7 +96,7 @@ class ExperimentController {
             continueTrialBtn.addEventListener('click', () => this.continueToNextTrial());
         }
         
-        // Download buttons
+        // Admin/Debug download buttons (hidden from participants)
         const downloadTrialBtn = document.getElementById('download-trial-data');
         const downloadMouseBtn = document.getElementById('download-mouse-data');
         const downloadTrialHeatmapsBtn = document.getElementById('download-trial-heatmaps');
@@ -113,6 +113,18 @@ class ExperimentController {
         }
         if (restartBtn) {
             restartBtn.addEventListener('click', () => this.restartExperiment());
+        }
+        
+        // Thank you screen close button
+        const closeExperimentBtn = document.getElementById('close-experiment');
+        if (closeExperimentBtn) {
+            closeExperimentBtn.addEventListener('click', () => this.closeExperiment());
+        }
+        
+        // Admin screen controls
+        const showThankYouBtn = document.getElementById('show-thank-you');
+        if (showThankYouBtn) {
+            showThankYouBtn.addEventListener('click', () => this.showScreen('thank-you'));
         }
         
         // Transition screen button
@@ -132,6 +144,7 @@ class ExperimentController {
         event.preventDefault();
         
         const participantId = document.getElementById('participant-id').value;
+        const participantEmail = document.getElementById('participant-email').value;
         const session = document.getElementById('session').value;
         
         if (!participantId.trim()) {
@@ -139,8 +152,20 @@ class ExperimentController {
             return;
         }
         
+        if (!participantEmail.trim()) {
+            alert('Please enter an email address');
+            return;
+        }
+        
+        // Basic email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(participantEmail)) {
+            alert('Please enter a valid email address');
+            return;
+        }
+        
         // Set participant data
-        this.dataManager.setParticipantInfo(participantId, session);
+        this.dataManager.setParticipantInfo(participantId, participantEmail, session);
         
         // Start loading images
         await this.loadImages();
@@ -762,19 +787,209 @@ class ExperimentController {
             console.log('MouseView removeAll skipped during finish (error):', error.message);
         }
         
-        // Clean up experiment state (cursor was never hidden)
-        // document.body.classList.remove('experiment-active'); // Not needed anymore
+        // Show processing screen immediately
+        this.showScreen('processing');
         
-        // Show end screen
-        this.showScreen('end');
-        
-        // Auto-download data (no automatic heatmap)
-        setTimeout(() => {
-            this.dataManager.exportAllData();
-        }, 1000);
+        // Run data processing workflow
+        await this.runDataProcessingWorkflow();
         
         console.log('Experiment completed');
         console.log('Summary:', this.dataManager.getSummaryStats());
+    }
+    
+    /**
+     * Complete data processing workflow with visual progress and File.io upload
+     */
+    async runDataProcessingWorkflow() {
+        let heatmapUploadResult = null;
+        
+        try {
+            // Step 1: Save data (immediate)
+            this.updateProcessingStep('step-saving', 'active', '⏳');
+            this.updateProgressBar(10, 'Saving experiment data...');
+            await this.delay(500); // Brief delay for visual feedback
+            this.updateProcessingStep('step-saving', 'completed', '✓');
+            
+            // Step 2: Generate and upload heatmaps (long process - do this before email)
+            this.updateProcessingStep('step-heatmaps', 'active', '⏳');
+            this.updateProgressBar(25, 'Generating visual heatmaps...');
+            
+            try {
+                // Generate heatmaps and upload to File.io
+                heatmapUploadResult = await this.dataManager.generateAllTrialHeatmapsWithUpload(
+                    (current, total, message) => {
+                        // Update progress during heatmap generation (25-80%)
+                        const progressPercent = 25 + Math.round(((current / total) * 55));
+                        this.updateProgressBar(progressPercent, message || `Generating heatmap ${current} of ${total}...`);
+                    }
+                );
+                
+                if (heatmapUploadResult && heatmapUploadResult.success) {
+                    this.updateProcessingStep('step-heatmaps', 'completed', '✓');
+                    this.updateProgressBar(80, 'Heatmaps uploaded successfully!');
+                    console.log('✓ Heatmaps uploaded to File.io:', heatmapUploadResult.downloadUrl);
+                } else {
+                    this.updateProcessingStep('step-heatmaps', 'completed', '⚠️');
+                    this.updateProgressBar(80, 'Heatmap upload failed, continuing...');
+                    console.error('✗ Heatmap upload failed:', heatmapUploadResult?.error);
+                }
+            } catch (error) {
+                console.error('Heatmap generation and upload failed:', error);
+                this.updateProcessingStep('step-heatmaps', 'completed', '⚠️');
+                this.updateProgressBar(80, 'Heatmap processing failed, continuing...');
+            }
+            
+            // Step 3: Send email with heatmap link (priority)
+            this.updateProcessingStep('step-email', 'active', '⏳');
+            this.updateProgressBar(85, 'Sending data and heatmap link to researcher...');
+            
+            try {
+                // Send email with heatmap information if available
+                const emailResult = await this.dataManager.sendDataToResearcher(heatmapUploadResult);
+                
+                if (emailResult.success) {
+                    this.updateProcessingStep('step-email', 'completed', '✓');
+                    this.updateProgressBar(90, 'Data sent successfully to researcher!');
+                } else {
+                    this.updateProcessingStep('step-email', 'completed', '⚠️');
+                    this.updateProgressBar(90, 'Email sending failed, data may be lost');
+                }
+            } catch (error) {
+                console.error('Email sending failed:', error);
+                this.updateProcessingStep('step-email', 'completed', '⚠️');
+                this.updateProgressBar(90, 'Email sending failed');
+            }
+            
+            // Step 4: Finalize
+            this.updateProcessingStep('step-complete', 'active', '⏳');
+            this.updateProgressBar(95, 'Finalizing...');
+            await this.delay(1000);
+            this.updateProcessingStep('step-complete', 'completed', '✓');
+            
+            // Complete
+            this.updateProgressBar(100, 'Processing complete!');
+            await this.delay(1500);
+            
+            // Show final thank you screen
+            this.showScreen('thank-you');
+            
+        } catch (error) {
+            console.error('Data processing workflow failed:', error);
+            this.updateProgressBar(100, 'Processing completed with some errors');
+            await this.delay(2000);
+            this.showScreen('thank-you');
+        }
+    }
+    
+    /**
+     * Send experiment data to researcher via email
+     */
+    async sendDataToResearcher() {        
+        try {
+            const result = await this.dataManager.sendDataToResearcher();
+            
+            if (result.success) {
+                console.log('✓ Data successfully sent to researcher');
+                return true;
+            } else {
+                console.error('✗ Failed to send data to researcher:', result.message);
+                return false;
+            }
+            
+        } catch (error) {
+            console.error('✗ Email sending error:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Generate heatmaps in background with optional progress updates
+     */
+    async generateHeatmapsInBackground(showProgress = false) {
+        console.log('Starting heatmap generation...');
+        try {
+            if (showProgress) {
+                // Use the existing heatmap generation with progress callback
+                await this.generateTrialHeatmaps();
+            } else {
+                // Run without UI updates
+                await this.dataManager.generateAllTrialHeatmaps();
+            }
+            console.log('Heatmap generation completed');
+            return true;
+        } catch (error) {
+            console.error('Heatmap generation failed:', error);
+            return false;
+        }
+    }
+    
+    /**
+     * Update processing step visual state
+     */
+    updateProcessingStep(stepId, state, icon) {
+        const stepElement = document.getElementById(stepId);
+        if (!stepElement) return;
+        
+        // Remove existing state classes
+        stepElement.classList.remove('active', 'completed');
+        
+        // Add new state
+        if (state === 'active' || state === 'completed') {
+            stepElement.classList.add(state);
+        }
+        
+        // Update icon
+        const iconElement = stepElement.querySelector('.step-icon');
+        if (iconElement) {
+            iconElement.textContent = icon;
+        }
+    }
+    
+    /**
+     * Update progress bar and message
+     */
+    updateProgressBar(percent, message) {
+        const progressBar = document.getElementById('processing-progress-bar');
+        const percentElement = document.getElementById('processing-percent');
+        const messageElement = document.getElementById('processing-message');
+        
+        if (progressBar) {
+            progressBar.style.width = `${percent}%`;
+        }
+        
+        if (percentElement) {
+            percentElement.textContent = `${percent}% Complete`;
+        }
+        
+        if (messageElement && message) {
+            messageElement.textContent = message;
+        }
+    }
+    
+    /**
+     * Close/end the experiment (called from thank you screen)
+     */
+    closeExperiment() {
+        // Optional: Clear any remaining data from memory
+        this.dataManager.clearData();
+        
+        // Show a simple goodbye message
+        if (confirm('Thank you for participating! You may now close this window.')) {
+            // User can close the window or we can redirect them
+            window.close(); // May not work in all browsers due to security
+        }
+    }
+    
+    /**
+     * Enable admin mode for researchers (hidden functionality)
+     */
+    enableAdminMode() {
+        // Secret key combination or URL parameter to show admin controls
+        const adminScreen = document.getElementById('admin-screen');
+        if (adminScreen) {
+            adminScreen.style.display = 'block';
+            this.showScreen('admin');
+        }
     }
     
     restartExperiment() {
@@ -838,6 +1053,14 @@ class ExperimentController {
                     // Ctrl+D or Cmd+D for debug mode
                     event.preventDefault();
                     this.toggleDebugMode();
+                }
+                break;
+                
+            case 'KeyA':
+                if (event.ctrlKey && event.shiftKey && this.currentState === 'thank-you') {
+                    // Ctrl+Shift+A on thank you screen = Admin mode
+                    event.preventDefault();
+                    this.enableAdminMode();
                 }
                 break;
         }

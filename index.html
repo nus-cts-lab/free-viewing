@@ -34,7 +34,7 @@
 
                     <p>Each trial begins when you click the "Start" or "Next" button in the center. After clicking, four images will appear in the corners of the screen for 15 seconds.</p>
 
-                    <p><strong>Important:</strong> Move your mouse cursor naturally to explore the images, just as you would move your eyes to look at different parts of the images.</p>
+                    <p><strong>Important:</strong> Please do not navigate away from this experiment until you reach the Thank You page.</p>
                     
                     <p>When you are ready, press <strong>SPACEBAR</strong> to begin.</p>
                 </div>
@@ -50,6 +50,10 @@
                     <div class="form-group">
                         <label for="participant-id">Participant ID:</label>
                         <input type="text" id="participant-id" name="participant-id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="participant-email">Email Address:</label>
+                        <input type="email" id="participant-email" name="participant-email" required>
                     </div>
                     <div class="form-group">
                         <label for="session">Session:</label>
@@ -137,25 +141,90 @@
             </div>
         </div>
 
-        <!-- End Screen -->
-        <div id="end-screen" class="screen">
+        <!-- Data Processing Screen -->
+        <div id="processing-screen" class="screen">
             <div class="content-wrapper">
-                <h2>Experiment Complete!</h2>
-                <p>Thank you for participating in this experiment.</p>
-                <p>Your data has been collected and will be downloaded automatically.</p>
-                <p><strong>Click the buttons below to download your data and individual trial heatmaps.</strong></p>
-                <div id="download-buttons">
+                <h2>Processing Your Data</h2>
+                <div class="loading-spinner"></div>
+                <p id="processing-message">Please do not navigate away from this page while your data is being processed...</p>
+                
+                <div id="processing-steps" style="margin: 30px 0; text-align: left; max-width: 500px;">
+                    <div class="processing-step" id="step-saving">
+                        <span class="step-icon">⏳</span>
+                        <span class="step-text">Saving experiment data...</span>
+                    </div>
+                    <div class="processing-step" id="step-email">
+                        <span class="step-icon">⏳</span>
+                        <span class="step-text">Sending data to researcher...</span>
+                    </div>
+                    <div class="processing-step" id="step-heatmaps">
+                        <span class="step-icon">⏳</span>
+                        <span class="step-text">Generating visual heatmaps...</span>
+                    </div>
+                    <div class="processing-step" id="step-complete">
+                        <span class="step-icon">⏳</span>
+                        <span class="step-text">Finalizing...</span>
+                    </div>
+                </div>
+                
+                <div id="processing-progress" style="margin: 20px 0;">
+                    <div style="background: #ddd; height: 20px; border-radius: 10px; overflow: hidden;">
+                        <div id="processing-progress-bar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.5s;"></div>
+                    </div>
+                    <p id="processing-percent" style="margin: 10px 0; font-weight: bold;">0% Complete</p>
+                </div>
+                
+                <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
+                    <strong>Important:</strong> Do not close this tab or navigate away until processing is complete.
+                </p>
+            </div>
+        </div>
+
+        <!-- Thank You Screen (Final) -->
+        <div id="thank-you-screen" class="screen">
+            <div class="content-wrapper">
+                <h2>Thank You!</h2>
+                <div style="font-size: 3em; margin: 20px 0;">✅</div>
+                <p style="font-size: 1.2em; margin: 20px 0;">Your participation has been successfully recorded.</p>
+                <p>Your data has been securely transmitted to the research team.</p>
+                <p style="margin: 30px 0; padding: 20px; background: #f0f9ff; border-radius: 10px; color: #1e40af;">
+                    <strong>Data Processing Complete!</strong><br>
+                    All your responses and attention patterns have been saved and will contribute to important research.
+                </p>
+                
+                <div style="margin: 40px 0;">
+                    <p style="color: #666; font-size: 0.9em;">
+                        If you have any questions about this study, please contact the research team.
+                    </p>
+                </div>
+                
+                <button id="close-experiment" class="primary-button" style="margin-top: 20px;">
+                    Close Experiment
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Admin/Debug Screen (for researchers only) -->
+        <div id="admin-screen" class="screen" style="display: none;">
+            <div class="content-wrapper">
+                <h2>Admin Controls</h2>
+                <p style="color: #d32f2f; font-weight: bold;">For researchers only - not shown to participants</p>
+                
+                <div id="download-buttons" style="margin: 20px 0;">
                     <button id="download-trial-data" class="primary-button">Download Trial Data</button>
                     <button id="download-mouse-data" class="primary-button">Download Mouse Data</button>
                     <button id="download-trial-heatmaps" class="primary-button">Download Trial Heatmaps (ZIP)</button>
                 </div>
+                
                 <div id="heatmap-progress" style="display: none; margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 5px;">
                     <div style="margin-bottom: 10px; font-weight: bold;" id="heatmap-progress-text">Generating heatmaps...</div>
                     <div style="background: #ddd; height: 20px; border-radius: 10px; overflow: hidden;">
                         <div id="heatmap-progress-bar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.3s;"></div>
                     </div>
                 </div>
+                
                 <button id="restart-experiment" class="secondary-button">Restart Experiment</button>
+                <button id="show-thank-you" class="secondary-button">Return to Thank You Screen</button>
             </div>
         </div>
 
@@ -177,6 +246,8 @@
     <!-- Scripts -->
     <!-- JSZip library for creating ZIP files -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- EmailJS library for sending emails -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <!-- Official MouseView.js library -->
     <script src="https://mouseview-docs.netlify.app/MouseView.js" type="module"></script>
     <!-- Your custom scripts -->
@@ -186,6 +257,23 @@
     <script src="js/experiment.js?v=2025-07-28-fix"></script>
 
     <script type="module">
+        // Initialize EmailJS (replace with your actual EmailJS credentials)
+        (function() {
+            // EmailJS configuration - REPLACE THESE VALUES
+            emailjs.init({
+                publicKey: 'ES-FZtiy_aE5x8CC7', // Your actual public key
+            });
+            
+            // Store EmailJS configuration globally for access by DataManager
+            window.EMAIL_CONFIG = {
+                serviceID: 'service_uenfs4k',        // Replace with your service ID
+                templateID: 'template_9qqxaxa',      // Replace with your template ID
+                researcherEmail: 'szeling.tan@u.nus.edu' // Replace with researcher's email
+            };
+            
+            console.log('EmailJS initialized');
+        })();
+        
         // Configure MouseView.js parameters and initialize experiment
         window.addEventListener('load', () => {
             // Basic MouseView.js initialization (configuration happens only during trials)

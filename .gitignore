@@ -11,3 +11,8 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Documentation/Setup files (not for public repo)
+EMAILJS-SETUP.md
+EMAIL-TEMPLATE-WITH-HEATMAPS.html
+FILE-IO-INTEGRATION-GUIDE.md
