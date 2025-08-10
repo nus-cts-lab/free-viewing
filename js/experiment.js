@@ -790,11 +790,53 @@ class ExperimentController {
         // Show processing screen immediately
         this.showScreen('processing');
         
+        // Hide any heatmap elements from participants
+        this.hideHeatmapElementsFromParticipants();
+        
         // Run data processing workflow
         await this.runDataProcessingWorkflow();
         
         console.log('Experiment completed');
         console.log('Summary:', this.dataManager.getSummaryStats());
+    }
+    
+    /**
+     * Hide heatmap elements from participants during processing
+     */
+    hideHeatmapElementsFromParticipants() {
+        // Hide any canvas elements that might contain heatmap data
+        const canvases = document.querySelectorAll('canvas');
+        canvases.forEach(canvas => {
+            canvas.style.display = 'none';
+            canvas.style.visibility = 'hidden';
+            canvas.style.position = 'absolute';
+            canvas.style.top = '-9999px';
+            canvas.style.left = '-9999px';
+            canvas.style.zIndex = '-1000';
+        });
+        
+        // Hide any download buttons
+        const downloadButtons = document.querySelectorAll('button[id*="download"]');
+        downloadButtons.forEach(button => {
+            button.style.display = 'none';
+            button.style.visibility = 'hidden';
+        });
+        
+        // Hide heatmap progress indicators in processing screen
+        const heatmapProgress = document.getElementById('heatmap-progress');
+        if (heatmapProgress) {
+            heatmapProgress.style.display = 'none';
+            heatmapProgress.style.visibility = 'hidden';
+        }
+        
+        // Hide admin controls completely
+        const adminScreen = document.getElementById('admin-screen');
+        if (adminScreen) {
+            adminScreen.style.display = 'none';
+            adminScreen.style.visibility = 'hidden';
+        }
+        
+        console.log('Heatmap elements hidden from participants during processing');
     }
     
     /**

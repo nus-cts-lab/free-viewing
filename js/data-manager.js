@@ -470,6 +470,8 @@ class DataManager {
      */
     async sendDataToResearcher(heatmapUploadResult = null) {
         console.log('=== EMAIL SENDING DEBUG ===');
+        console.log('Current URL:', window.location.href);
+        console.log('Domain:', window.location.hostname);
         
         if (!window.EMAIL_CONFIG) {
             console.error('EmailJS not configured. Please set up EMAIL_CONFIG in index.html');
@@ -494,16 +496,20 @@ class DataManager {
                 console.warn('Data too large for email. Consider file upload service.');
             }
             
-            // Prepare email template parameters (only variables used in template)
+            // Prepare email template parameters (all variables used in template)
             const templateParams = {
                 participant_id: this.participantData.participant_id,
-                participant_email: this.participantData.participant_email,
+                participant_email: this.participantData.participant_email || 'not provided',
                 session: this.participantData.session,
                 experiment_date: new Date().toLocaleDateString(),
                 experiment_time: new Date().toLocaleTimeString(),
                 trial_data_csv: trialCSV,
                 mouse_data_csv: mouseCSV,
-                researcher_email: window.EMAIL_CONFIG.researcherEmail
+                researcher_email: window.EMAIL_CONFIG.researcherEmail,
+                total_trials: this.trialData.length,
+                total_mouse_points: this.getMouseData().length,
+                browser_info: navigator.userAgent,
+                screen_resolution: `${screen.width}x${screen.height}`
             };
             
             // Add heatmap information if available
@@ -532,13 +538,21 @@ class DataManager {
             });
             
             // Send email via EmailJS
+            console.log('Attempting to send email with EmailJS...');
+            console.log('Service ID:', window.EMAIL_CONFIG.serviceID);
+            console.log('Template ID:', window.EMAIL_CONFIG.templateID);
+            console.log('EmailJS available:', typeof emailjs !== 'undefined');
+            
             const response = await emailjs.send(
                 window.EMAIL_CONFIG.serviceID,
                 window.EMAIL_CONFIG.templateID,
                 templateParams
             );
             
-            console.log('Email sent successfully:', response);
+            console.log('Email sent successfully!');
+            console.log('EmailJS Response:', response);
+            console.log('Response status:', response.status);
+            console.log('Response text:', response.text);
             console.log('=== END EMAIL SENDING DEBUG ===');
             
             return {
@@ -922,7 +936,32 @@ class DataManager {
                     
                     if (heatmapCanvas) {
                         console.log('Capturing heatmap from canvas...');
-                        heatmapCanvas.toBlob(resolve, 'image/png', 1.0);
+                        
+                        // Hide the heatmap canvas from participants during processing
+                        const originalDisplay = heatmapCanvas.style.display;
+                        const originalVisibility = heatmapCanvas.style.visibility;
+                        const originalPosition = heatmapCanvas.style.position;
+                        const originalTop = heatmapCanvas.style.top;
+                        const originalLeft = heatmapCanvas.style.left;
+                        const originalZIndex = heatmapCanvas.style.zIndex;
+                        
+                        heatmapCanvas.style.display = 'none';
+                        heatmapCanvas.style.visibility = 'hidden';
+                        heatmapCanvas.style.position = 'absolute';
+                        heatmapCanvas.style.top = '-9999px';
+                        heatmapCanvas.style.left = '-9999px';
+                        heatmapCanvas.style.zIndex = '-1000';
+                        
+                        heatmapCanvas.toBlob((blob) => {
+                            // Restore original styles after blob creation
+                            heatmapCanvas.style.display = originalDisplay;
+                            heatmapCanvas.style.visibility = originalVisibility;
+                            heatmapCanvas.style.position = originalPosition;
+                            heatmapCanvas.style.top = originalTop;
+                            heatmapCanvas.style.left = originalLeft;
+                            heatmapCanvas.style.zIndex = originalZIndex;
+                            resolve(blob);
+                        }, 'image/png', 1.0);
                     } else {
                         console.log('No heatmap canvas found, creating fallback...');
                         // Create a more meaningful fallback that shows the mouse data
@@ -947,6 +986,14 @@ class DataManager {
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
+            
+            // Hide canvas from participants during processing
+            canvas.style.display = 'none';
+            canvas.style.visibility = 'hidden';
+            canvas.style.position = 'absolute';
+            canvas.style.top = '-9999px';
+            canvas.style.left = '-9999px';
+            canvas.style.zIndex = '-1000';
             
             // Black background
             ctx.fillStyle = 'black';

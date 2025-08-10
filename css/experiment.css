@@ -433,6 +433,17 @@ input[type="text"]:focus, input[type="email"]:focus {
     margin: 10px;
 }
 
+/* Hide all download controls and heatmap displays during processing */
+#processing-screen #download-buttons,
+#processing-screen button[id*="download"],
+#processing-screen canvas,
+#processing-screen img[src*="heatmap"],
+#processing-screen .heatmap-display,
+#processing-screen #heatmap-progress {
+    display: none !important;
+    visibility: hidden !important;
+}
+
 /* Instructions Styling */
 .instructions {
     text-align: left;

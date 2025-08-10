@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>EmailJS Test</title>
+</head>
+<body>
+    <h1>EmailJS Test</h1>
+    <button id="test-email">Send Test Email</button>
+    <div id="result"></div>
+
+    <!-- EmailJS library -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
+    <script>
+        // Initialize EmailJS with your credentials
+        emailjs.init({
+            publicKey: 'ES-FZtiy_aE5x8CC7'
+        });
+        
+        // Test email configuration
+        const EMAIL_CONFIG = {
+            serviceID: 'service_uenfs4k',
+            templateID: 'template_9qqxaxa',
+            researcherEmail: 'szeling.tan@u.nus.edu'
+        };
+        
+        document.getElementById('test-email').addEventListener('click', async () => {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Sending test email...';
+            
+            try {
+                const templateParams = {
+                    participant_id: 'TEST123',
+                    participant_email: 'test@example.com',
+                    session: 'TEST_SESSION',
+                    experiment_date: new Date().toLocaleDateString(),
+                    experiment_time: new Date().toLocaleTimeString(),
+                    trial_data_csv: 'trial_idx,img_dysphoric,img_threat\\n0,test1.jpg,test2.jpg',
+                    mouse_data_csv: 'timestamp,mouse_x,mouse_y\\n1000,100,200',
+                    researcher_email: EMAIL_CONFIG.researcherEmail,
+                    heatmap_available: false,
+                    heatmap_download_url: '',
+                    heatmap_filename: 'N/A',
+                    heatmap_file_size: 'N/A',
+                    heatmap_expiry_days: 0,
+                    link_expiry_date: 'N/A'
+                };
+                
+                console.log('Sending test email with params:', templateParams);
+                
+                const response = await emailjs.send(
+                    EMAIL_CONFIG.serviceID,
+                    EMAIL_CONFIG.templateID,
+                    templateParams
+                );
+                
+                console.log('Success:', response);
+                resultDiv.innerHTML = `✅ Test email sent successfully! Response: ${response.text}`;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                resultDiv.innerHTML = `❌ Failed to send test email: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
