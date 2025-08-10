@@ -602,3 +602,91 @@ body.experiment-active .center-button {
 body.experiment-active .center-button * {
     cursor: pointer !important;
 }
+
+/* Admin Interface Styles */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.admin-table th, .admin-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #444;
+}
+
+.admin-table th {
+    background: rgba(255,255,255,0.1);
+    border-bottom: 2px solid #666;
+    font-weight: bold;
+}
+
+.admin-table tr:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.admin-stat-card {
+    padding: 20px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.admin-stat-value {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.admin-action-btn {
+    margin: 2px;
+    padding: 8px 12px;
+    font-size: 0.8em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.admin-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.admin-danger-btn {
+    background: #d32f2f !important;
+    color: white !important;
+}
+
+.admin-danger-btn:hover {
+    background: #b71c1c !important;
+}
+
+.role-selection-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 40px 0;
+}
+
+.role-card {
+    text-align: center;
+}
+
+.role-card button {
+    font-size: 1.5em;
+    padding: 20px 40px;
+    min-width: 200px;
+}
+
+.role-description {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #aaa;
+}

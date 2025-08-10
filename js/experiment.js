@@ -1,3 +1,4 @@
+
 /**
  * ExperimentController - Main controller for the Images Free Viewing experiment
  * Orchestrates all components and manages experiment flow
@@ -48,8 +49,8 @@ class ExperimentController {
             // Set up event listeners
             this.bindEvents();
             
-            // Initialize first screen
-            this.showScreen('welcome');
+            // Initialize first screen (role selection is now the landing page)
+            // Don't call showScreen here - role-selection is already active by default
             
             console.log('Experiment controller ready');
         } catch (error) {
@@ -794,11 +795,76 @@ class ExperimentController {
         // Hide any heatmap elements from participants
         this.hideHeatmapElementsFromParticipants();
         
-        // Run data processing workflow
-        await this.runDataProcessingWorkflow();
+        try {
+            // STEP 1: Store experiment data persistently FIRST (awaited)
+            console.log('Starting file generation and storage...');
+            this.updateProgressBar(10, 'Generating data files...');
+            
+            const fileStorageSuccess = await this.storeExperimentDataForAdmin();
+            
+            if (!fileStorageSuccess) {
+                console.error('File storage failed, but continuing with email notification');
+                this.updateProgressBar(40, 'File storage failed, continuing...');
+            } else {
+                this.updateProgressBar(40, 'Data files stored successfully!');
+            }
+            
+            // STEP 2: Only then run email workflow (awaited)
+            await this.runDataProcessingWorkflow();
+            
+        } catch (error) {
+            console.error('Experiment completion workflow failed:', error);
+            this.updateProgressBar(100, 'Processing completed with errors');
+            await this.delay(2000);
+            this.showScreen('thank-you');
+        }
         
         console.log('Experiment completed');
         console.log('Summary:', this.dataManager.getSummaryStats());
+    }
+    
+    /**
+     * Store experiment data persistently for admin access
+     */
+    async storeExperimentDataForAdmin() {
+        try {
+            const participantId = this.dataManager.participantData.participant_id;
+            const participantEmail = this.dataManager.participantData.participant_email || 'Not provided';
+            const trialData = this.dataManager.getTrialData();
+            const mouseData = this.dataManager.getMouseData();
+            
+            console.log('=== STORING EXPERIMENT DATA FOR ADMIN ===');
+            console.log('Participant ID:', participantId);
+            console.log('Trial data count:', trialData.length);
+            console.log('Mouse data count:', mouseData.length);
+            
+            // Store data using admin manager
+            if (window.adminManager) {
+                const success = await window.adminManager.storeExperimentData(
+                    participantId,
+                    participantEmail,
+                    trialData,
+                    mouseData
+                );
+                
+                if (success) {
+                    console.log('✓ Experiment data stored persistently for admin access');
+                    return true;
+                } else {
+                    console.error('✗ Failed to store experiment data persistently');
+                    return false;
+                }
+            } else {
+                console.error('✗ AdminManager not available - data not stored persistently');
+                return false;
+            }
+            
+        } catch (error) {
+            console.error('Error storing experiment data for admin:', error);
+            return false;
+        } finally {
+            console.log('=== END STORING EXPERIMENT DATA ===');
+        }
     }
     
     /**
@@ -842,75 +908,36 @@ class ExperimentController {
     
     /**
      * Complete data processing workflow with visual progress
+     * Files have already been generated and stored at this point
      */
     async runDataProcessingWorkflow() {
-        let heatmapUploadResult = null;
-        
         try {
-            // Step 1: Save data (immediate)
-            this.updateProcessingStep('step-saving', 'active', '⏳');
-            this.updateProgressBar(10, 'Saving experiment data...');
+            // Start from 40% since file storage is already complete
+            this.updateProgressBar(50, 'Processing complete, sending notification...');
             await this.delay(500); // Brief delay for visual feedback
-            this.updateProcessingStep('step-saving', 'completed', '✓');
             
-            // Step 2: Generate heatmaps (without upload for now)
-            this.updateProcessingStep('step-heatmaps', 'active', '⏳');
-            this.updateProgressBar(25, 'Generating visual heatmaps...');
+            // Since files are already stored, we just need to send email notification
+            this.updateProgressBar(70, 'Sending notification to researcher...');
             
             try {
-                // Generate heatmaps locally (no upload)
-                const heatmapResult = await this.dataManager.generateAllTrialHeatmaps(
-                    (current, total, message) => {
-                        // Update progress during heatmap generation (25-80%)
-                        const progressPercent = 25 + Math.round(((current / total) * 55));
-                        this.updateProgressBar(progressPercent, message || `Generating heatmap ${current} of ${total}...`);
-                    }
-                );
-                
-                if (heatmapResult && heatmapResult.success > 0) {
-                    this.updateProcessingStep('step-heatmaps', 'completed', '✓');
-                    this.updateProgressBar(80, 'Heatmaps generated successfully!');
-                    console.log('✓ Heatmaps generated locally:', heatmapResult);
-                    heatmapUploadResult = { success: false, message: 'Heatmaps generated locally only' };
-                } else {
-                    this.updateProcessingStep('step-heatmaps', 'completed', '⚠️');
-                    this.updateProgressBar(80, 'Heatmap generation failed, continuing...');
-                    console.error('✗ Heatmap generation failed:', heatmapResult);
-                    heatmapUploadResult = { success: false, message: 'Heatmap generation failed' };
-                }
-            } catch (error) {
-                console.error('Heatmap generation failed:', error);
-                this.updateProcessingStep('step-heatmaps', 'completed', '⚠️');
-                this.updateProgressBar(80, 'Heatmap processing failed, continuing...');
-                heatmapUploadResult = { success: false, message: 'Heatmap processing error', error: error.message };
-            }
-            
-            // Step 3: Send email with heatmap link (priority)
-            this.updateProcessingStep('step-email', 'active', '⏳');
-            this.updateProgressBar(85, 'Sending data to researcher...');
-            
-            try {
-                // Send email with heatmap information if available
-                const emailResult = await this.dataManager.sendDataToResearcher(heatmapUploadResult);
+                // Send email notification (no file attachments, just participant info)
+                const emailResult = await this.dataManager.sendDataToResearcher();
                 
                 if (emailResult.success) {
-                    this.updateProcessingStep('step-email', 'completed', '✓');
-                    this.updateProgressBar(90, 'Data sent successfully to researcher!');
+                    this.updateProgressBar(90, 'Notification sent successfully!');
+                    console.log('✓ Email notification sent to researcher');
                 } else {
-                    this.updateProcessingStep('step-email', 'completed', '⚠️');
-                    this.updateProgressBar(90, 'Email sending failed, data may be lost');
+                    this.updateProgressBar(90, 'Notification sending failed, but data is stored');
+                    console.warn('✗ Email notification failed, but files are stored in database');
                 }
             } catch (error) {
-                console.error('Email sending failed:', error);
-                this.updateProcessingStep('step-email', 'completed', '⚠️');
-                this.updateProgressBar(90, 'Email sending failed');
+                console.error('Email notification failed:', error);
+                this.updateProgressBar(90, 'Notification failed, but data is stored');
             }
             
-            // Step 4: Finalize
-            this.updateProcessingStep('step-complete', 'active', '⏳');
+            // Finalize
             this.updateProgressBar(95, 'Finalizing...');
             await this.delay(1000);
-            this.updateProcessingStep('step-complete', 'completed', '✓');
             
             // Complete
             this.updateProgressBar(100, 'Processing complete!');
@@ -924,27 +951,6 @@ class ExperimentController {
             this.updateProgressBar(100, 'Processing completed with some errors');
             await this.delay(2000);
             this.showScreen('thank-you');
-        }
-    }
-    
-    /**
-     * Send experiment data to researcher via email
-     */
-    async sendDataToResearcher() {        
-        try {
-            const result = await this.dataManager.sendDataToResearcher();
-            
-            if (result.success) {
-                console.log('✓ Data successfully sent to researcher');
-                return true;
-            } else {
-                console.error('✗ Failed to send data to researcher:', result.message);
-                return false;
-            }
-            
-        } catch (error) {
-            console.error('✗ Email sending error:', error);
-            return false;
         }
     }
     

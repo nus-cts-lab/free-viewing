@@ -466,10 +466,11 @@ class DataManager {
     // === EMAIL SENDING FUNCTIONALITY ===
     
     /**
-     * Send experiment data to researcher via email (with optional heatmap link)
+     * Send participant completion notification to researcher via email
+     * No CSV data attachments - researcher downloads from admin dashboard
      */
-    async sendDataToResearcher(heatmapUploadResult = null) {
-        console.log('=== EMAIL SENDING DEBUG ===');
+    async sendDataToResearcher() {
+        console.log('=== EMAIL NOTIFICATION SENDING ===');
         console.log('Current URL:', window.location.href);
         console.log('Domain:', window.location.hostname);
         
@@ -484,49 +485,45 @@ class DataManager {
         }
         
         try {
-            // Prepare CSV data for size checking only (not sending in email)
-            const trialCSV = this.getTrialDataCSV();
-            const mouseCSV = this.getMouseDataCSV();
+            // Calculate completion time
+            const completionDate = new Date();
+            const expiryDate = new Date(completionDate.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days from now
             
-            // Check data size (EmailJS has 50KB limit on template variables)
-            const totalSize = (trialCSV.length + mouseCSV.length) / 1024; // KB
-            console.log(`Total CSV data size: ${totalSize.toFixed(2)} KB`);
-            console.log(`EmailJS template variable limit: 50KB`);
-            
-            // Prepare email template parameters (WITHOUT large CSV data to avoid 50KB limit)
+            // Prepare email template parameters (participant info only)
             const templateParams = {
                 participant_id: this.participantData.participant_id,
                 participant_email: this.participantData.participant_email || 'not provided',
                 session: this.participantData.session,
-                experiment_date: new Date().toLocaleDateString(),
-                experiment_time: new Date().toLocaleTimeString(),
+                completion_date: completionDate.toLocaleDateString(),
+                completion_time: completionDate.toLocaleTimeString(),
                 researcher_email: window.EMAIL_CONFIG.researcherEmail,
                 total_trials: this.trialData.length,
                 total_mouse_points: this.getMouseData().length,
                 browser_info: navigator.userAgent,
                 screen_resolution: `${screen.width}x${screen.height}`,
-                data_size_kb: totalSize.toFixed(2)
+                
+                // Download instructions
+                download_message: 'Please download the participant data from the admin dashboard within 7 days.',
+                expiry_date: expiryDate.toLocaleDateString(),
+                admin_url: window.location.origin, // Base URL for admin access
+                
+                // Data summary
+                data_summary: `Trial data: ${this.trialData.length} trials completed, Mouse tracking: ${this.getMouseData().length} data points recorded`
             };
             
-            // Add heatmap information (no file upload, just local generation status)
-            templateParams.heatmap_available = false;
-            templateParams.heatmap_status = heatmapUploadResult ? heatmapUploadResult.message : 'Not generated';
-            templateParams.heatmap_note = 'Heatmaps generated locally for download by researcher if needed';
-            
-            console.log('Sending email with template params:', {
+            console.log('Sending email notification with params:', {
                 participant_id: templateParams.participant_id,
                 session: templateParams.session,
-                data_size_kb: totalSize.toFixed(2),
+                completion_time: templateParams.completion_date + ' ' + templateParams.completion_time,
                 total_trials: templateParams.total_trials,
                 total_mouse_points: templateParams.total_mouse_points,
-                heatmap_status: templateParams.heatmap_status
+                expiry_date: templateParams.expiry_date
             });
             
             // Send email via EmailJS
-            console.log('Attempting to send email with EmailJS...');
+            console.log('Attempting to send email notification with EmailJS...');
             console.log('Service ID:', window.EMAIL_CONFIG.serviceID);
             console.log('Template ID:', window.EMAIL_CONFIG.templateID);
-            console.log('EmailJS available:', typeof emailjs !== 'undefined');
             
             const response = await emailjs.send(
                 window.EMAIL_CONFIG.serviceID,
@@ -534,25 +531,25 @@ class DataManager {
                 templateParams
             );
             
-            console.log('Email sent successfully!');
+            console.log('Email notification sent successfully!');
             console.log('EmailJS Response:', response);
             console.log('Response status:', response.status);
             console.log('Response text:', response.text);
-            console.log('=== END EMAIL SENDING DEBUG ===');
+            console.log('=== END EMAIL NOTIFICATION ===');
             
             return {
                 success: true,
-                message: 'Data sent successfully to researcher',
+                message: 'Participant completion notification sent to researcher',
                 emailId: response.text
             };
             
         } catch (error) {
-            console.error('Failed to send email:', error);
-            console.log('=== END EMAIL SENDING DEBUG ===');
+            console.error('Failed to send email notification:', error);
+            console.log('=== END EMAIL NOTIFICATION ===');
             
             return {
                 success: false,
-                message: 'Failed to send data via email: ' + error.message,
+                message: 'Failed to send completion notification: ' + error.message,
                 error: error
             };
         }
@@ -607,7 +604,10 @@ class DataManager {
     
     // Data export functions
     
-    exportTrialData() {
+    /**
+     * Generate trial CSV content (for file storage)
+     */
+    generateTrialCSVContent() {
         console.log('=== CSV EXPORT DEBUG ===');
         console.log('Original trial data fields:', this.trialData.length > 0 ? Object.keys(this.trialData[0]) : 'No data');
         
@@ -630,12 +630,23 @@ class DataManager {
             this.trialData.length > 0 && this.trialData[0].hasOwnProperty(field)
         ));
         
-        const csv = this.convertToCSV(filteredTrialData);
+        return this.convertToCSV(filteredTrialData);
+    }
+
+    exportTrialData() {
+        const csv = this.generateTrialCSVContent();
         this.downloadCSV(csv, `trial_data_${this.participantData.participant_id}_${this.getTimestamp()}.csv`);
     }
     
+    /**
+     * Generate mouse CSV content (for file storage)
+     */
+    generateMouseCSVContent() {
+        return this.convertToCSV(this.mouseTrackingData);
+    }
+
     exportMouseData() {
-        const csv = this.convertToCSV(this.mouseTrackingData);
+        const csv = this.generateMouseCSVContent();
         this.downloadCSV(csv, `mouse_data_${this.participantData.participant_id}_${this.getTimestamp()}.csv`);
     }
     

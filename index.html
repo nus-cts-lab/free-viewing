@@ -23,8 +23,38 @@
 <body>
     <div id="experiment-container">
         
-        <!-- Welcome Screen -->
-        <div id="welcome-screen" class="screen active">
+        <!-- Role Selection Screen (Landing Page) -->
+        <div id="role-selection-screen" class="screen active">
+            <div class="content-wrapper">
+                <h1>Free Viewing Task</h1>
+                <div class="instructions">
+                    <p>Welcome to the Free Viewing experiment platform. Please select your role:</p>
+                </div>
+                
+                <div class="role-selection-buttons">
+                    <div class="role-card">
+                        <button id="participant-role-btn" class="primary-button">
+                            👤 Participant
+                        </button>
+                        <p class="role-description">
+                            Take part in the experiment
+                        </p>
+                    </div>
+                    
+                    <div class="role-card">
+                        <button id="admin-role-btn" class="secondary-button">
+                            🔐 Admin
+                        </button>
+                        <p class="role-description">
+                            Access data dashboard
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participant Welcome Screen -->
+        <div id="welcome-screen" class="screen">
             <div class="content-wrapper">
                 <h1>Welcome!</h1>
                 <div class="instructions">
@@ -148,22 +178,10 @@
                 <div class="loading-spinner"></div>
                 <p id="processing-message">Please do not navigate away from this page while your data is being processed...</p>
                 
-                <div id="processing-steps" style="margin: 30px 0; text-align: left; max-width: 500px;">
-                    <div class="processing-step" id="step-saving">
-                        <span class="step-icon">⏳</span>
-                        <span class="step-text">Saving experiment data...</span>
-                    </div>
-                    <div class="processing-step" id="step-email">
-                        <span class="step-icon">⏳</span>
+                <div id="processing-steps" style="margin: 30px 0; text-align: center; max-width: 500px;">
+                    <div class="processing-step active" id="step-sending">
+                        <span class="step-icon">📤</span>
                         <span class="step-text">Sending data to researcher...</span>
-                    </div>
-                    <div class="processing-step" id="step-heatmaps">
-                        <span class="step-icon">⏳</span>
-                        <span class="step-text">Generating visual heatmaps...</span>
-                    </div>
-                    <div class="processing-step" id="step-complete">
-                        <span class="step-icon">⏳</span>
-                        <span class="step-text">Finalizing...</span>
                     </div>
                 </div>
                 
@@ -171,7 +189,7 @@
                     <div style="background: #ddd; height: 20px; border-radius: 10px; overflow: hidden;">
                         <div id="processing-progress-bar" style="width: 0%; height: 100%; background: #4CAF50; transition: width 0.5s;"></div>
                     </div>
-                    <p id="processing-percent" style="margin: 10px 0; font-weight: bold;">0% Complete</p>
+                    <p id="processing-percent" style="margin: 10px 0; font-weight: bold;">Processing...</p>
                 </div>
                 
                 <p style="color: #666; font-size: 0.9em; margin-top: 30px;">
@@ -201,6 +219,64 @@
                 <button id="close-experiment" class="primary-button" style="margin-top: 20px;">
                     Close Experiment
                 </button>
+            </div>
+        </div>
+
+        <!-- Admin Login Screen -->
+        <div id="admin-login-screen" class="screen">
+            <div class="content-wrapper">
+                <h2>🔐 Admin Login</h2>
+                <p style="margin-bottom: 30px;">Please enter your admin credentials to access the data dashboard.</p>
+                
+                <form id="admin-login-form" style="max-width: 400px; margin: 0 auto;">
+                    <div class="form-group">
+                        <label for="admin-username">Username:</label>
+                        <input type="text" id="admin-username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="admin-password">Password:</label>
+                        <input type="password" id="admin-password" name="password" required>
+                    </div>
+                    
+                    <button type="submit" class="primary-button">Login</button>
+                    <button type="button" id="back-to-roles" class="secondary-button" style="margin-left: 10px;">Back</button>
+                </form>
+                
+                <div id="admin-login-error" style="display: none; color: #d32f2f; margin-top: 20px; font-weight: bold;">
+                    Invalid credentials. Please try again.
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard Screen -->
+        <div id="admin-dashboard-screen" class="screen">
+            <div class="content-wrapper">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                    <h2>📊 Admin Dashboard</h2>
+                    <button id="admin-logout" class="secondary-button">Logout</button>
+                </div>
+                
+                <div id="storage-overview" style="margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
+                    <h3>Storage Overview</h3>
+                    <div id="storage-stats">
+                        <p>Loading storage information...</p>
+                    </div>
+                </div>
+                
+                <div id="participant-data-list">
+                    <h3>Participant Data</h3>
+                    <div id="data-list-container">
+                        <p>Loading participant data...</p>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 30px; padding: 20px; background: rgba(255,0,0,0.1); border-radius: 10px;">
+                    <h4>⚠️ Data Management</h4>
+                    <p>Data is automatically deleted after 7 days. Use the cleanup button to remove expired data manually.</p>
+                    <button id="cleanup-expired-data" class="secondary-button">Remove Expired Data</button>
+                    <button id="clear-all-data" class="secondary-button" style="margin-left: 10px; background: #d32f2f;">Clear All Data</button>
+                </div>
             </div>
         </div>
 
@@ -248,12 +324,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- EmailJS library for sending emails -->
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Supabase client library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Official MouseView.js library -->
     <script src="https://mouseview-docs.netlify.app/MouseView.js" type="module"></script>
     <!-- Your custom scripts -->
     <script src="js/data-manager.js?v=2025-07-28-fix"></script>
     <script src="js/image-manager.js?v=2025-07-28-fix"></script>
     <script src="js/practice-manager.js?v=2025-07-28-fix"></script>
+    <script src="js/admin-manager.js?v=2025-07-28-fix"></script>
     <script src="js/experiment.js?v=2025-07-28-fix"></script>
 
     <script type="module">
@@ -274,6 +353,22 @@
             console.log('EmailJS initialized');
         })();
         
+        // Initialize Supabase (you'll need to replace these with your actual credentials)
+        (function() {
+            // SUPABASE CONFIGURATION - REPLACE THESE VALUES
+            const SUPABASE_URL = 'https://lcrxhfpvkllgzmnhyios.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjcnhoZnB2a2xsZ3ptbmh5aW9zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MjUyMTUsImV4cCI6MjA3MDQwMTIxNX0.S7fIqcR1eZ0U6A_u3fyz5QGQg9Aq6M5Yy4J3j5sdPiM'; // Your anon/public key
+            
+            // Initialize Supabase client globally
+            if (typeof supabase !== 'undefined') {
+                window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase initialized');
+                console.log('✅ Supabase configured successfully');
+            } else {
+                console.error('Supabase library not loaded');
+            }
+        })();
+        
         // Configure MouseView.js parameters and initialize experiment
         window.addEventListener('load', () => {
             // Basic MouseView.js initialization (configuration happens only during trials)
@@ -284,6 +379,10 @@
                 
                 console.log('MouseView.js basic initialization complete');
             }
+            
+            // Initialize admin system
+            window.adminManager = new AdminManager();
+            window.adminManager.init();
             
             // Initialize your experiment
             const experiment = new ExperimentController();
