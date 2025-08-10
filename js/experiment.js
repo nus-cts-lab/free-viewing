@@ -23,7 +23,7 @@ class ExperimentController {
             fixationDuration: 2000, // ms (2 seconds)
             imageViewingTime: 15000, // 15 seconds automatic progression
             enableMouseTracking: true,
-            enablePractice: true,
+            enablePractice: false,
             debug: false,
             showTimer: false, // Hide timer during main trials
             showProgress: false, // Hide trial progress indicator
@@ -210,10 +210,11 @@ class ExperimentController {
             await this.delay(500); // Give loading screen time to show "Ready!" 
             
             // Start practice trials or experiment
-            console.log('Config loaded, starting practice...');
             if (this.settings.enablePractice) {
+                console.log('Config loaded, starting practice...');
                 await this.startPractice();
             } else {
+                console.log('Config loaded, starting main experiment...');
                 await this.startExperiment();
             }
             
@@ -840,7 +841,7 @@ class ExperimentController {
     }
     
     /**
-     * Complete data processing workflow with visual progress and File.io upload
+     * Complete data processing workflow with visual progress
      */
     async runDataProcessingWorkflow() {
         let heatmapUploadResult = null;
@@ -852,13 +853,13 @@ class ExperimentController {
             await this.delay(500); // Brief delay for visual feedback
             this.updateProcessingStep('step-saving', 'completed', '✓');
             
-            // Step 2: Generate and upload heatmaps (long process - do this before email)
+            // Step 2: Generate heatmaps (without upload for now)
             this.updateProcessingStep('step-heatmaps', 'active', '⏳');
             this.updateProgressBar(25, 'Generating visual heatmaps...');
             
             try {
-                // Generate heatmaps and upload to File.io
-                heatmapUploadResult = await this.dataManager.generateAllTrialHeatmapsWithUpload(
+                // Generate heatmaps locally (no upload)
+                const heatmapResult = await this.dataManager.generateAllTrialHeatmaps(
                     (current, total, message) => {
                         // Update progress during heatmap generation (25-80%)
                         const progressPercent = 25 + Math.round(((current / total) * 55));
@@ -866,24 +867,27 @@ class ExperimentController {
                     }
                 );
                 
-                if (heatmapUploadResult && heatmapUploadResult.success) {
+                if (heatmapResult && heatmapResult.success > 0) {
                     this.updateProcessingStep('step-heatmaps', 'completed', '✓');
-                    this.updateProgressBar(80, 'Heatmaps uploaded successfully!');
-                    console.log('✓ Heatmaps uploaded to File.io:', heatmapUploadResult.downloadUrl);
+                    this.updateProgressBar(80, 'Heatmaps generated successfully!');
+                    console.log('✓ Heatmaps generated locally:', heatmapResult);
+                    heatmapUploadResult = { success: false, message: 'Heatmaps generated locally only' };
                 } else {
                     this.updateProcessingStep('step-heatmaps', 'completed', '⚠️');
-                    this.updateProgressBar(80, 'Heatmap upload failed, continuing...');
-                    console.error('✗ Heatmap upload failed:', heatmapUploadResult?.error);
+                    this.updateProgressBar(80, 'Heatmap generation failed, continuing...');
+                    console.error('✗ Heatmap generation failed:', heatmapResult);
+                    heatmapUploadResult = { success: false, message: 'Heatmap generation failed' };
                 }
             } catch (error) {
-                console.error('Heatmap generation and upload failed:', error);
+                console.error('Heatmap generation failed:', error);
                 this.updateProcessingStep('step-heatmaps', 'completed', '⚠️');
                 this.updateProgressBar(80, 'Heatmap processing failed, continuing...');
+                heatmapUploadResult = { success: false, message: 'Heatmap processing error', error: error.message };
             }
             
             // Step 3: Send email with heatmap link (priority)
             this.updateProcessingStep('step-email', 'active', '⏳');
-            this.updateProgressBar(85, 'Sending data and heatmap link to researcher...');
+            this.updateProgressBar(85, 'Sending data to researcher...');
             
             try {
                 // Send email with heatmap information if available

@@ -484,57 +484,42 @@ class DataManager {
         }
         
         try {
-            // Prepare CSV data
+            // Prepare CSV data for size checking only (not sending in email)
             const trialCSV = this.getTrialDataCSV();
             const mouseCSV = this.getMouseDataCSV();
             
-            // Check data size (EmailJS has size limitations)
+            // Check data size (EmailJS has 50KB limit on template variables)
             const totalSize = (trialCSV.length + mouseCSV.length) / 1024; // KB
-            console.log(`Email data size: ${totalSize.toFixed(2)} KB`);
+            console.log(`Total CSV data size: ${totalSize.toFixed(2)} KB`);
+            console.log(`EmailJS template variable limit: 50KB`);
             
-            if (totalSize > 8000) { // 8MB limit for most email providers
-                console.warn('Data too large for email. Consider file upload service.');
-            }
-            
-            // Prepare email template parameters (all variables used in template)
+            // Prepare email template parameters (WITHOUT large CSV data to avoid 50KB limit)
             const templateParams = {
                 participant_id: this.participantData.participant_id,
                 participant_email: this.participantData.participant_email || 'not provided',
                 session: this.participantData.session,
                 experiment_date: new Date().toLocaleDateString(),
                 experiment_time: new Date().toLocaleTimeString(),
-                trial_data_csv: trialCSV,
-                mouse_data_csv: mouseCSV,
                 researcher_email: window.EMAIL_CONFIG.researcherEmail,
                 total_trials: this.trialData.length,
                 total_mouse_points: this.getMouseData().length,
                 browser_info: navigator.userAgent,
-                screen_resolution: `${screen.width}x${screen.height}`
+                screen_resolution: `${screen.width}x${screen.height}`,
+                data_size_kb: totalSize.toFixed(2)
             };
             
-            // Add heatmap information if available
-            if (heatmapUploadResult && heatmapUploadResult.success) {
-                templateParams.heatmap_available = true;
-                templateParams.heatmap_download_url = heatmapUploadResult.downloadUrl;
-                templateParams.heatmap_filename = heatmapUploadResult.filename;
-                templateParams.heatmap_file_size = this.formatFileSize(heatmapUploadResult.fileSize);
-                templateParams.heatmap_expiry_days = heatmapUploadResult.expiryDays;
-                templateParams.link_expiry_date = this.formatExpiryDate(heatmapUploadResult.expiryDays);
-            } else {
-                templateParams.heatmap_available = false;
-                templateParams.heatmap_download_url = '';
-                templateParams.heatmap_filename = 'Heatmap generation failed';
-                templateParams.heatmap_file_size = 'N/A';
-                templateParams.heatmap_expiry_days = 0;
-                templateParams.link_expiry_date = 'N/A';
-            }
+            // Add heatmap information (no file upload, just local generation status)
+            templateParams.heatmap_available = false;
+            templateParams.heatmap_status = heatmapUploadResult ? heatmapUploadResult.message : 'Not generated';
+            templateParams.heatmap_note = 'Heatmaps generated locally for download by researcher if needed';
             
             console.log('Sending email with template params:', {
                 participant_id: templateParams.participant_id,
                 session: templateParams.session,
                 data_size_kb: totalSize.toFixed(2),
-                heatmap_available: templateParams.heatmap_available || false,
-                heatmap_url: templateParams.heatmap_available ? 'YES' : 'NO'
+                total_trials: templateParams.total_trials,
+                total_mouse_points: templateParams.total_mouse_points,
+                heatmap_status: templateParams.heatmap_status
             });
             
             // Send email via EmailJS
@@ -1046,122 +1031,6 @@ class DataManager {
         return `trial_${trialNum}_${trialType}_heatmap.png`;
     }
     
-    /**
-     * Upload file to File.io and get shareable download link
-     */
-    async uploadToFileIO(blob, filename) {
-        console.log('=== FILE.IO UPLOAD DEBUG ===');
-        console.log('Uploading file:', filename);
-        console.log('File size:', (blob.size / 1024 / 1024).toFixed(2), 'MB');
-        
-        try {
-            const formData = new FormData();
-            formData.append('file', blob, filename);
-            
-            // File.io API call
-            const response = await fetch('https://file.io/', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (!response.ok) {
-                throw new Error(`File.io upload failed: ${response.status} ${response.statusText}`);
-            }
-            
-            const result = await response.json();
-            
-            console.log('File.io response:', result);
-            
-            if (result.success) {
-                console.log('✓ File uploaded successfully');
-                console.log('Download URL:', result.link);
-                console.log('File expires in 14 days');
-                console.log('=== END FILE.IO UPLOAD DEBUG ===');
-                
-                return {
-                    success: true,
-                    downloadUrl: result.link,
-                    filename: filename,
-                    fileSize: blob.size,
-                    expiryDays: 14,
-                    message: 'File uploaded successfully to File.io'
-                };
-            } else {
-                throw new Error('File.io returned success: false');
-            }
-            
-        } catch (error) {
-            console.error('File.io upload error:', error);
-            console.log('=== END FILE.IO UPLOAD DEBUG ===');
-            
-            return {
-                success: false,
-                error: error.message,
-                downloadUrl: null,
-                message: 'Failed to upload file to File.io'
-            };
-        }
-    }
-    
-    /**
-     * Generate heatmaps for all trials, create ZIP, and upload to File.io
-     */
-    async generateAllTrialHeatmapsWithUpload(onProgress = null) {
-        console.log('Starting heatmap generation with File.io upload...');
-        
-        try {
-            // Generate the ZIP file locally first
-            const zipResult = await this.generateAllTrialHeatmaps(onProgress);
-            
-            if (!zipResult || zipResult.errors > 0) {
-                console.warn('Heatmap generation had errors, proceeding with upload anyway');
-            }
-            
-            if (onProgress) {
-                onProgress(100, 100, 'Uploading heatmaps to cloud storage...');
-            }
-            
-            // Get the generated ZIP blob (we need to modify generateAllTrialHeatmaps to return the blob)
-            const filename = `trial_heatmaps_${this.participantData.participant_id}_${this.getTimestamp()}.zip`;
-            
-            // We'll need to modify generateAllTrialHeatmaps to return the ZIP blob instead of auto-downloading
-            // For now, let's create a separate method that generates and returns the blob
-            const zipBlob = await this.generateHeatmapZipBlob(onProgress);
-            
-            if (!zipBlob) {
-                throw new Error('Failed to generate heatmap ZIP blob');
-            }
-            
-            // Upload to File.io
-            const uploadResult = await this.uploadToFileIO(zipBlob, filename);
-            
-            if (uploadResult.success) {
-                console.log('✓ Heatmaps uploaded successfully to File.io');
-                return {
-                    success: true,
-                    downloadUrl: uploadResult.downloadUrl,
-                    filename: uploadResult.filename,
-                    fileSize: uploadResult.fileSize,
-                    expiryDays: uploadResult.expiryDays
-                };
-            } else {
-                console.error('✗ Failed to upload heatmaps to File.io');
-                return {
-                    success: false,
-                    error: uploadResult.error,
-                    message: uploadResult.message
-                };
-            }
-            
-        } catch (error) {
-            console.error('Error in heatmap generation and upload:', error);
-            return {
-                success: false,
-                error: error.message,
-                message: 'Failed to generate and upload heatmaps'
-            };
-        }
-    }
     
     /**
      * Generate heatmap ZIP as blob (without auto-download)
