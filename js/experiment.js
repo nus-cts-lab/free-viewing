@@ -306,13 +306,7 @@ class ExperimentController {
         }
         
         // Ensure MouseView is deactivated for transition screen
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during transition (error):', error.message);
-        }
+        ExperimentUtils.cleanupMouseView('transition');
         
         this.showScreen('transition');
     }
@@ -462,13 +456,7 @@ class ExperimentController {
         this.imageManager.hideImages(imageContainer);
         
         // Disable MouseView during button display
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during main start button');
-        }
+        ExperimentUtils.cleanupMouseView('main-start-button');
         
         // Show main start button and wait for click
         if (mainStartButton) {
@@ -496,13 +484,7 @@ class ExperimentController {
         this.imageManager.hideImages(imageContainer);
         
         // Disable MouseView during button display
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during next trial button');
-        }
+        ExperimentUtils.cleanupMouseView('next-trial-button');
         
         // Show next trial button and wait for click
         if (nextTrialButton) {
@@ -531,13 +513,7 @@ class ExperimentController {
         fixationCross.classList.add('active');
         
         // Disable MouseView during fixation so cross is fully visible
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during fixation');
-        }
+        ExperimentUtils.cleanupMouseView('fixation');
         
         // Wait for fixation duration
         await this.delay(this.settings.fixationDuration);
@@ -558,14 +534,7 @@ class ExperimentController {
         this.configureMouseView();
         
         // Start mouse tracking
-        try {
-            if (typeof mouseview !== 'undefined') {
-                mouseview.startTracking();
-                console.log(`Mouse tracking started for trial ${this.currentTrial + 1}`);
-            }
-        } catch (error) {
-            console.error('Error starting image trial:', error);
-        }
+        ExperimentUtils.startMouseViewTracking(`image-trial-${this.currentTrial + 1}`);
         
         // Display images
         this.imageManager.displayImages(imageData, imageContainer);
@@ -583,29 +552,7 @@ class ExperimentController {
         }
         
         // Stop tracking and collect data
-        let mouseData = [];
-        try {
-            if (typeof mouseview !== 'undefined') {
-                // Stop tracking first
-                mouseview.stopTracking();
-                
-                // Get data using direct access (more reliable than getData() which has JSON parsing issues)
-                mouseData = mouseview.datalogger?.data || [];
-                
-                // Clear data for next trial (to avoid accumulation)
-                if (mouseview.datalogger) {
-                    mouseview.datalogger.data = [];
-                }
-                
-                console.log('Mouse tracking stopped, data collected');
-                console.log('=== IMAGE TRIAL MOUSE DATA DEBUG ===');
-                console.log('MouseData length:', mouseData.length);
-                console.log('MouseData sample (first 3 points):', mouseData.slice(0, 3));
-                console.log('=== END MOUSE DATA DEBUG ===');
-            }
-        } catch (error) {
-            console.error('Error stopping mouse tracking:', error);
-        }
+        const mouseData = ExperimentUtils.stopMouseViewTracking(`image-trial-${this.imageTrialCounter}`);
         
         // Record trial data
         this.dataManager.recordTrialData(trialInfo, imageData, mouseData);
@@ -640,14 +587,7 @@ class ExperimentController {
         this.configureMouseView();
         
         // Start mouse tracking for filler
-        try {
-            if (typeof mouseview !== 'undefined') {
-                mouseview.startTracking();
-                console.log(`Mouse tracking started for filler ${this.fillerTrialCounter + 1}`);
-            }
-        } catch (error) {
-            console.error('Error starting filler tracking:', error);
-        }
+        ExperimentUtils.startMouseViewTracking(`filler-trial-${this.fillerTrialCounter}`);
         
         // Display filler images
         this.imageManager.displayImages(fillerData, imageContainer);
@@ -664,29 +604,7 @@ class ExperimentController {
         }
         
         // Stop tracking and collect data
-        let mouseData = [];
-        try {
-            if (typeof mouseview !== 'undefined') {
-                // Stop tracking first
-                mouseview.stopTracking();
-                
-                // Get data using direct access (more reliable than getData() which has JSON parsing issues)
-                mouseData = mouseview.datalogger?.data || [];
-                
-                // Clear data for next trial (to avoid accumulation)
-                if (mouseview.datalogger) {
-                    mouseview.datalogger.data = [];
-                }
-                
-                console.log('Filler mouse tracking stopped, data collected');
-                console.log('=== FILLER TRIAL MOUSE DATA DEBUG ===');
-                console.log('MouseData length:', mouseData.length);
-                console.log('MouseData sample (first 3 points):', mouseData.slice(0, 3));
-                console.log('=== END MOUSE DATA DEBUG ===');
-            }
-        } catch (error) {
-            console.error('Error stopping filler tracking:', error);
-        }
+        const mouseData = ExperimentUtils.stopMouseViewTracking(`filler-trial-${this.fillerTrialCounter}`);
         
         // Record filler trial data
         this.dataManager.recordTrialData(trialInfo, fillerData, mouseData);
@@ -781,13 +699,7 @@ class ExperimentController {
         this.hideTrialCountdown();
         
         // Deactivate mouse tracking
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during finish (error):', error.message);
-        }
+        ExperimentUtils.cleanupMouseView('finish-experiment');
         
         // Show processing screen immediately
         this.showScreen('processing');
@@ -980,7 +892,9 @@ class ExperimentController {
      */
     updateProcessingStep(stepId, state, icon) {
         const stepElement = document.getElementById(stepId);
-        if (!stepElement) return;
+        if (!stepElement) {
+            return;
+        }
         
         // Remove existing state classes
         stepElement.classList.remove('active', 'completed');
@@ -1059,13 +973,7 @@ class ExperimentController {
         
         // Reset UI (cursor was never hidden)
         // document.body.classList.remove('experiment-active'); // Not needed anymore
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during restart (error):', error.message);
-        }
+        ExperimentUtils.cleanupMouseView('restart-experiment');
         
         // Show welcome screen
         this.showScreen('welcome');
@@ -1093,10 +1001,8 @@ class ExperimentController {
                 break;
                 
             case 'Escape':
-                if (this.isExperimentRunning) {
-                    if (confirm('Are you sure you want to exit the experiment?')) {
-                        this.emergencyExit();
-                    }
+                if (this.isExperimentRunning && confirm('Are you sure you want to exit the experiment?')) {
+                    this.emergencyExit();
                 }
                 break;
                 
@@ -1120,13 +1026,7 @@ class ExperimentController {
     
     emergencyExit() {
         this.isExperimentRunning = false;
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during emergency exit (error):', error.message);
-        }
+        ExperimentUtils.cleanupMouseView('emergency-exit');
         // document.body.classList.remove('experiment-active'); // Not needed anymore
         
         // Clean up any running timers
@@ -1154,32 +1054,9 @@ class ExperimentController {
     }
     
     showScreen(screenName) {
-        // Hide all screens
-        document.querySelectorAll('.screen').forEach(screen => {
-            screen.classList.remove('active');
+        ExperimentUtils.showScreen(screenName, (newState) => {
+            this.currentState = newState;
         });
-        
-        // Deactivate MouseView for all screens except during actual trials
-        // MouseView should only be active during 'experiment' screen trials
-        if (screenName !== 'experiment') {
-            try {
-                if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                    mouseview.removeAll();
-                }
-            } catch (error) {
-                // Ignore errors when nothing to remove during initialization
-                console.log('MouseView removeAll skipped (nothing to remove)');
-            }
-        }
-        
-        
-        // Show target screen
-        const targetScreen = document.getElementById(`${screenName}-screen`);
-        if (targetScreen) {
-            targetScreen.classList.add('active');
-            this.currentState = screenName;
-        }
-        
         console.log(`Showing screen: ${screenName}`);
     }
     
@@ -1193,55 +1070,31 @@ class ExperimentController {
     }
     
     showTrialCountdown() {
-        // Create countdown element for main trials
-        let countdown = document.getElementById('trial-countdown');
-        if (!countdown) {
-            countdown = document.createElement('div');
-            countdown.id = 'trial-countdown';
-            countdown.style.cssText = `
-                position: absolute;
-                top: 20px;
-                left: 20px;
-                background: rgba(0,0,0,0.9);
-                color: white;
-                padding: 10px 15px;
-                border-radius: 5px;
-                font-size: 1.2em;
-                z-index: 200;
-                font-weight: bold;
-                opacity: 1;
-                pointer-events: none;
-            `;
-            document.getElementById('experiment-screen').appendChild(countdown);
-        }
-        
-        // Start countdown
-        let timeLeft = this.settings.imageViewingTime / 1000;
-        countdown.textContent = `Time: ${timeLeft}s`;
-        countdown.style.display = 'block';
-        
-        const countdownInterval = setInterval(() => {
-            timeLeft--;
-            countdown.textContent = `Time: ${timeLeft}s`;
-            
-            if (timeLeft <= 0) {
-                clearInterval(countdownInterval);
+        this.activeCountdown = window.experimentUtils.createCountdown({
+            countdownId: 'trial-countdown',
+            duration: this.settings.imageViewingTime,
+            position: { top: '20px', left: '20px' },
+            style: {
+                background: 'rgba(0,0,0,0.9)',
+                color: 'white',
+                padding: '10px 15px',
+                borderRadius: '5px',
+                fontSize: '1.2em',
+                zIndex: '200',
+                fontWeight: 'bold',
+                opacity: '1',
+                pointerEvents: 'none'
             }
-        }, 1000);
-        
-        // Store interval ID for cleanup
-        this.countdownInterval = countdownInterval;
+        });
     }
     
     hideTrialCountdown() {
-        if (this.countdownInterval) {
-            clearInterval(this.countdownInterval);
+        if (this.activeCountdown) {
+            this.activeCountdown.hide();
+            this.activeCountdown = null;
         }
-        
-        const countdown = document.getElementById('trial-countdown');
-        if (countdown) {
-            countdown.style.display = 'none';
-        }
+        // Also clean up any remaining countdown by ID
+        window.experimentUtils.hideCountdown('trial-countdown');
     }
     
     // Public API methods for external control
@@ -1276,42 +1129,23 @@ class ExperimentController {
     }
 
     // Configure MouseView ONLY for image viewing trials
+    delay(ms) {
+        return ExperimentUtils.delay(ms);
+    }
+
+    // Configure MouseView ONLY for image viewing trials
     async configureMouseView() {
-        console.log('=== MAIN CONFIGURE MOUSEVIEW CALLED ===');
-        try {
-            console.log('MouseView available?', typeof mouseview !== 'undefined');
-            if (typeof mouseview !== 'undefined') {
-                console.log('MouseView object before config:', mouseview);
-                console.log('Current params before config:', mouseview.params);
-                
-                console.log(`Setting aperture to ${this.settings.apertureSize}...`);
-                mouseview.params.apertureSize = this.settings.apertureSize; // Configurable spotlight size
-                mouseview.params.overlayAlpha = 0.85; // Consistent opacity for all trials
-                mouseview.params.overlayColour = 'black'; // Consistent color for all trials
-                mouseview.params.apertureGauss = 15; // Consistent edge smoothing for all trials
-                
-                console.log('Params after setting:', mouseview.params);
-                console.log('Calling mouseview.init()...');
-                mouseview.init();
-                console.log('Params after init():', mouseview.params);
-                
-                // Wait for MouseView overlay to be ready before continuing
-                await this.waitForMouseViewReady();
-                
-                console.log('MouseView configured and ready for trial');
-                
-                console.log('=== MAIN TRIAL MOUSEVIEW DEBUG ===');
-                console.log('Main trial aperture size:', mouseview.params.apertureSize);
-                console.log('Main trial overlay alpha:', mouseview.params.overlayAlpha);
-                console.log('=== END MAIN TRIAL DEBUG ===');
-            } else {
-                console.error('MouseView is undefined in main trial!');
-            }
-        } catch (error) {
-            console.error('Error configuring MouseView:', error);
-            console.error('Error stack:', error.stack);
-        }
-        console.log('=== END MAIN CONFIGURE MOUSEVIEW ===');
+        return await ExperimentUtils.configureMouseView({
+            apertureSize: this.settings.apertureSize,
+            overlayAlpha: 0.85,
+            overlayColour: 'black',
+            apertureGauss: 15
+        }, 'main');
+    }
+
+    // Wait for MouseView overlay to be ready and visible
+    async waitForMouseViewReady() {
+        return await ExperimentUtils.waitForMouseViewReady();
     }
 
     // Wait for MouseView overlay to be ready and visible

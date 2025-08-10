@@ -40,14 +40,14 @@ class PracticeManager {
             });
             
             // Shuffle each category and pick one random image from each
-            this.shuffleArray(allImages.dysphoric);
-            this.shuffleArray(allImages.threat);
-            this.shuffleArray(allImages.positive);
-            this.shuffleArray(allImages.neutral);
+            ExperimentUtils.shuffleArray(allImages.dysphoric);
+            ExperimentUtils.shuffleArray(allImages.threat);
+            ExperimentUtils.shuffleArray(allImages.positive);
+            ExperimentUtils.shuffleArray(allImages.neutral);
             
             // Create positions for the single practice trial
             const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-            this.shuffleArray(positions);
+            ExperimentUtils.shuffleArray(positions);
             
             // Create single practice trial
             this.practiceTrials = [{
@@ -87,13 +87,6 @@ class PracticeManager {
         
         console.error('No image trials found in config for practice');
         return false;
-    }
-    
-    shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
     }
     
     async startPractice(onProgress = null, onComplete = null) {
@@ -219,13 +212,7 @@ class PracticeManager {
         this.imageManager.hideImages(imageContainer);
         
         // Disable MouseView during button display
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during practice start button');
-        }
+        ExperimentUtils.cleanupMouseView('practice-start-button');
         
         // Show practice start button and wait for click
         if (practiceStartButton) {
@@ -260,13 +247,7 @@ class PracticeManager {
         fixationCross.classList.add('active');
         
         // Disable MouseView during fixation so cross is fully visible
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped during practice fixation');
-        }
+        ExperimentUtils.cleanupMouseView('practice-fixation');
         
         // Wait for fixation duration
         await this.delay(this.fixationDuration);
@@ -288,13 +269,7 @@ class PracticeManager {
         this.imageManager.displayImages(trial, imageContainer);
         
         // Start mouse tracking after images are displayed
-        try {
-            if (typeof mouseview !== 'undefined') {
-                mouseview.startTracking();
-            }
-        } catch (error) {
-            console.error('Error starting practice tracking:', error);
-        }
+        ExperimentUtils.startMouseViewTracking('practice-trial');
         
         // Show countdown timer only if enabled
         if (this.experimentSettings && this.experimentSettings.showPracticeTimer) {
@@ -312,56 +287,31 @@ class PracticeManager {
     }
     
     showCountdown() {
-        // Create countdown element
-        let countdown = document.getElementById('practice-countdown');
-        if (!countdown) {
-            countdown = document.createElement('div');
-            countdown.id = 'practice-countdown';
-            countdown.style.cssText = `
-                position: absolute;
-                top: 60px;
-                left: 20px;
-                background: rgba(0,0,0,0.9);
-                color: white;
-                padding: 10px 15px;
-                border-radius: 5px;
-                font-size: 1.2em;
-                z-index: 300;
-                font-weight: bold;
-                opacity: 1;
-                pointer-events: none;
-                display: block;
-            `;
-            document.getElementById('experiment-screen').appendChild(countdown);
-        }
-        
-        // Ensure countdown is visible and start countdown
-        countdown.style.display = 'block';
-        let timeLeft = this.trialDuration / 1000;
-        countdown.textContent = `Time: ${timeLeft}s`;
-        
-        const countdownInterval = setInterval(() => {
-            timeLeft--;
-            countdown.textContent = `Time: ${timeLeft}s`;
-            
-            if (timeLeft <= 0) {
-                clearInterval(countdownInterval);
+        this.activeCountdown = window.experimentUtils.createCountdown({
+            countdownId: 'practice-countdown',
+            duration: this.trialDuration,
+            position: { top: '60px', left: '20px' },
+            style: {
+                background: 'rgba(0,0,0,0.9)',
+                color: 'white',
+                padding: '10px 15px',
+                borderRadius: '5px',
+                fontSize: '1.2em',
+                zIndex: '300',
+                fontWeight: 'bold',
+                opacity: '1',
+                pointerEvents: 'none'
             }
-        }, 1000);
-        
-        // Store interval ID for cleanup
-        this.countdownInterval = countdownInterval;
+        });
     }
     
     hideCountdown() {
-        if (this.countdownInterval) {
-            clearInterval(this.countdownInterval);
+        if (this.activeCountdown) {
+            this.activeCountdown.hide();
+            this.activeCountdown = null;
         }
-        
-        const countdown = document.getElementById('practice-countdown');
-        if (countdown) {
-            countdown.style.display = 'none';
-        }
+        // Also clean up any remaining countdown by ID
+        window.experimentUtils.hideCountdown('practice-countdown');
     }
     
     recordPracticeData(trial, startTime, endTime, mouseData) {
@@ -394,7 +344,7 @@ class PracticeManager {
             practiceRecord.movement_smoothness = totalMovement / mouseData.length;
             
             // Time in each quadrant
-            const quadrantTimes = this.calculateQuadrantTimes(mouseData);
+            const quadrantTimes = ExperimentUtils.calculateQuadrantTimes(mouseData);
             practiceRecord.time_top_left = quadrantTimes.topLeft;
             practiceRecord.time_top_right = quadrantTimes.topRight;
             practiceRecord.time_bottom_left = quadrantTimes.bottomLeft;
@@ -403,34 +353,6 @@ class PracticeManager {
         
         this.practiceData.push(practiceRecord);
         console.log(`Practice trial ${practiceRecord.trial_idx} completed:`, practiceRecord);
-    }
-    
-    calculateQuadrantTimes(mouseData) {
-        if (!mouseData || mouseData.length === 0) {
-            return { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 };
-        }
-        
-        const quadrantTimes = { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 };
-        const centerX = window.innerWidth / 2;
-        const centerY = window.innerHeight / 2;
-        
-        for (let i = 1; i < mouseData.length; i++) {
-            const point = mouseData[i];
-            const prevPoint = mouseData[i - 1];
-            const timeDiff = point.relativeTime - prevPoint.relativeTime;
-            
-            if (point.x < centerX && point.y < centerY) {
-                quadrantTimes.topLeft += timeDiff;
-            } else if (point.x >= centerX && point.y < centerY) {
-                quadrantTimes.topRight += timeDiff;
-            } else if (point.x < centerX && point.y >= centerY) {
-                quadrantTimes.bottomLeft += timeDiff;
-            } else {
-                quadrantTimes.bottomRight += timeDiff;
-            }
-        }
-        
-        return quadrantTimes;
     }
     
     updateProgress() {
@@ -443,13 +365,7 @@ class PracticeManager {
         this.isPracticing = false;
         
         // Deactivate mouseView
-        try {
-            if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                mouseview.removeAll();
-            }
-        } catch (error) {
-            console.log('MouseView removeAll skipped (nothing to remove)');
-        }
+        ExperimentUtils.cleanupMouseView('complete-practice');
         
         // Calculate overall practice performance
         const overallPerformance = this.assessPracticePerformance();
@@ -481,9 +397,13 @@ class PracticeManager {
         const avgSmoothness = this.practiceData.reduce((sum, trial) => sum + (trial.movement_smoothness || 0), 0) / this.practiceData.length;
         
         let quality = 'good';
-        if (totalPoints < 100) quality = 'poor';
-        else if (avgSmoothness > 50) quality = 'fair';
-        else if (avgSmoothness < 10) quality = 'excellent';
+        if (totalPoints < 100) {
+            quality = 'poor';
+        } else if (avgSmoothness > 50) {
+            quality = 'fair';
+        } else if (avgSmoothness < 10) {
+            quality = 'excellent';
+        }
         
         return {
             trials_completed: this.practiceData.length,
@@ -496,13 +416,7 @@ class PracticeManager {
     skipPractice() {
         if (this.isPracticing) {
             this.isPracticing = false;
-            try {
-                if (typeof mouseview !== 'undefined' && mouseview.removeAll) {
-                    mouseview.removeAll();
-                }
-            } catch (error) {
-                console.log('MouseView removeAll skipped (nothing to remove)');
-            }
+            ExperimentUtils.cleanupMouseView('skip-practice');
             
             const skippedResults = {
                 type: 'practice',
@@ -523,59 +437,18 @@ class PracticeManager {
     }
     
     delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return ExperimentUtils.delay(ms);
     }
 
     // Configure MouseView ONLY for practice trials (matches main experiment settings)
     configureMouseView() {
-        console.log('=== PRACTICE CONFIGURE MOUSEVIEW CALLED ===');
-        try {
-            console.log('MouseView available?', typeof mouseview !== 'undefined');
-            if (typeof mouseview !== 'undefined') {
-                console.log('MouseView object before config:', mouseview);
-                console.log('Current params before config:', mouseview.params);
-                
-                const apertureSize = this.experimentSettings?.apertureSize || '20%';
-                console.log(`Setting aperture to ${apertureSize}...`);
-                mouseview.params.apertureSize = apertureSize; // Use experiment settings or default to 20%
-                mouseview.params.overlayAlpha = 0.85; // Consistent opacity for all trials
-                mouseview.params.overlayColour = 'black'; // Consistent color for all trials
-                mouseview.params.apertureGauss = 15; // Consistent edge smoothing for all trials
-                
-                console.log('Params after setting:', mouseview.params);
-                console.log('Calling mouseview.init()...');
-                mouseview.init();
-                console.log('Params after init():', mouseview.params);
-                console.log('MouseView configured for practice trial');
-                
-                // Additional debugging - check actual DOM elements
-                setTimeout(() => {
-                    const overlay = document.querySelector('#mouseview-overlay');
-                    const aperture = document.querySelector('#mouseview-aperture');
-                    console.log('=== PRACTICE DOM DEBUG ===');
-                    console.log('Overlay element:', overlay);
-                    console.log('Aperture element:', aperture);
-                    if (overlay) {
-                        console.log('Overlay style:', overlay.style.cssText);
-                    }
-                    if (aperture) {
-                        console.log('Aperture style:', aperture.style.cssText);
-                    }
-                    console.log('=== END PRACTICE DOM DEBUG ===');
-                }, 100);
-                
-                console.log('=== PRACTICE MOUSEVIEW DEBUG ===');
-                console.log('Practice aperture size:', mouseview.params.apertureSize);
-                console.log('Practice overlay alpha:', mouseview.params.overlayAlpha);
-                console.log('=== END PRACTICE DEBUG ===');
-            } else {
-                console.error('MouseView is undefined in practice!');
-            }
-        } catch (error) {
-            console.error('Error configuring MouseView:', error);
-            console.error('Error stack:', error.stack);
-        }
-        console.log('=== END PRACTICE CONFIGURE MOUSEVIEW ===');
+        const apertureSize = this.experimentSettings?.apertureSize || '20%';
+        return ExperimentUtils.configureMouseView({
+            apertureSize: apertureSize,
+            overlayAlpha: 0.85,
+            overlayColour: 'black',
+            apertureGauss: 15
+        }, 'practice');
     }
     
     getPracticeData() {

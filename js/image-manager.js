@@ -77,7 +77,7 @@ class ImageManager {
         console.log('Pattern after marking fillers:', this.fillerPattern);
         
         // Shuffle the pattern to randomize filler positions
-        this.shuffleArray(this.fillerPattern);
+        ExperimentUtils.shuffleArray(this.fillerPattern);
         
         console.log('Final generated filler pattern:', this.fillerPattern);
         console.log('Final pattern length:', this.fillerPattern.length);
@@ -93,10 +93,10 @@ class ImageManager {
         const neu_arr = this.imageTrials.map(trial => trial.neutral);
         
         // Shuffle each category independently (replicates Python random.shuffle)
-        this.shuffleArray(dys_arr);
-        this.shuffleArray(thr_arr);
-        this.shuffleArray(pos_arr);
-        this.shuffleArray(neu_arr);
+        ExperimentUtils.shuffleArray(dys_arr);
+        ExperimentUtils.shuffleArray(thr_arr);
+        ExperimentUtils.shuffleArray(pos_arr);
+        ExperimentUtils.shuffleArray(neu_arr);
         
         // Reconstruct trials with shuffled images
         this.imageTrials = this.imageTrials.map((trial, index) => ({
@@ -113,10 +113,10 @@ class ImageManager {
         const filler3_arr = this.neutralFillers.map(filler => filler.filler3);
         const filler4_arr = this.neutralFillers.map(filler => filler.filler4);
         
-        this.shuffleArray(filler1_arr);
-        this.shuffleArray(filler2_arr);
-        this.shuffleArray(filler3_arr);
-        this.shuffleArray(filler4_arr);
+        ExperimentUtils.shuffleArray(filler1_arr);
+        ExperimentUtils.shuffleArray(filler2_arr);
+        ExperimentUtils.shuffleArray(filler3_arr);
+        ExperimentUtils.shuffleArray(filler4_arr);
         
         this.neutralFillers = this.neutralFillers.map((filler, index) => ({
             ...filler,
@@ -127,14 +127,6 @@ class ImageManager {
         }));
         
         console.log('Image order randomized');
-    }
-    
-    shuffleArray(array) {
-        // Fisher-Yates shuffle algorithm (equivalent to Python's random.shuffle)
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
     }
     
     async preloadAllImages(onProgress = null) {
@@ -212,7 +204,7 @@ class ImageManager {
         
         // Create randomized position mapping for this trial
         const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-        this.shuffleArray(positions);
+        ExperimentUtils.shuffleArray(positions);
         
         return {
             trialIndex: trialIndex,
@@ -256,7 +248,7 @@ class ImageManager {
         
         // Create randomized position mapping for filler trial
         const positions = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
-        this.shuffleArray(positions);
+        ExperimentUtils.shuffleArray(positions);
         
         return {
             fillerIndex: fillerIndex,
