@@ -823,11 +823,24 @@ class DataManager {
             
             // Load the trial-specific mouse data into MouseView
             if (typeof mouseview !== 'undefined' && mouseview.datalogger) {
+                // Hide heatmap canvas from participants before generation
+                const heatmapCanvas = document.querySelector('#mouseview-heatmap-canvas') || 
+                                    document.querySelector('canvas[id*="heatmap"]') || 
+                                    document.querySelector('#mouseview canvas');
+                
+                let originalDisplay, originalVisibility;
+                if (heatmapCanvas) {
+                    originalDisplay = heatmapCanvas.style.display;
+                    originalVisibility = heatmapCanvas.style.visibility;
+                    heatmapCanvas.style.display = 'none';
+                    heatmapCanvas.style.visibility = 'hidden';
+                }
+                
                 // Temporarily replace datalogger data with trial-specific data
                 const originalData = mouseview.datalogger.data;
                 mouseview.datalogger.data = formattedData;
                 
-                // Generate heatmap
+                // Generate heatmap (now hidden from participants)
                 await new Promise(resolve => {
                     mouseview.plotHeatMap();
                     // Give MouseView time to render the heatmap
@@ -836,6 +849,12 @@ class DataManager {
                 
                 // Capture the heatmap as image
                 const imageBlob = await this.captureHeatmapAsImage(mouseData);
+                
+                // Restore original canvas styles
+                if (heatmapCanvas) {
+                    heatmapCanvas.style.display = originalDisplay;
+                    heatmapCanvas.style.visibility = originalVisibility;
+                }
                 
                 // Restore original data
                 mouseview.datalogger.data = originalData;
