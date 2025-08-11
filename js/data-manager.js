@@ -823,43 +823,41 @@ class DataManager {
             
             // Load the trial-specific mouse data into MouseView
             if (typeof mouseview !== 'undefined' && mouseview.datalogger) {
-                // Hide heatmap canvas from participants before generation
-                const heatmapCanvas = document.querySelector('#mouseview-heatmap-canvas') || 
-                                    document.querySelector('canvas[id*="heatmap"]') || 
-                                    document.querySelector('#mouseview canvas');
-                
-                let originalDisplay, originalVisibility;
-                if (heatmapCanvas) {
-                    originalDisplay = heatmapCanvas.style.display;
-                    originalVisibility = heatmapCanvas.style.visibility;
-                    heatmapCanvas.style.display = 'none';
-                    heatmapCanvas.style.visibility = 'hidden';
-                }
-                
                 // Temporarily replace datalogger data with trial-specific data
                 const originalData = mouseview.datalogger.data;
                 mouseview.datalogger.data = formattedData;
                 
-                // Generate heatmap (now hidden from participants)
+                // Generate heatmap and then hide it from participants
                 await new Promise(resolve => {
                     mouseview.plotHeatMap();
-                    // Give MouseView time to render the heatmap
-                    setTimeout(resolve, 1500); // Increased wait time
+                    
+                    // Give MouseView time to render, then hide the canvas
+                    setTimeout(() => {
+                        // Find and hide the heatmap canvas AFTER MouseView creates it
+                        const heatmapCanvas = document.querySelector('#heatmap') || 
+                                            document.querySelector('canvas[id*="heatmap"]') || 
+                                            document.querySelector('#mouseview canvas');
+                        
+                        if (heatmapCanvas) {
+                            // Use !important to override MouseView's aggressive inline styles
+                            heatmapCanvas.style.setProperty('display', 'none', 'important');
+                            heatmapCanvas.style.setProperty('visibility', 'hidden', 'important');
+                            heatmapCanvas.style.setProperty('position', 'absolute', 'important');
+                            heatmapCanvas.style.setProperty('top', '-9999px', 'important');
+                            heatmapCanvas.style.setProperty('left', '-9999px', 'important');
+                            heatmapCanvas.style.setProperty('z-index', '-1000', 'important');
+                        }
+                        resolve();
+                    }, 1500); // Wait for MouseView to finish rendering
                 });
                 
-                // Capture the heatmap as image
+                // Capture the heatmap as image (canvas is already hidden)
                 const imageBlob = await this.captureHeatmapAsImage(mouseData);
-                
-                // Restore original canvas styles
-                if (heatmapCanvas) {
-                    heatmapCanvas.style.display = originalDisplay;
-                    heatmapCanvas.style.visibility = originalVisibility;
-                }
                 
                 // Restore original data
                 mouseview.datalogger.data = originalData;
                 
-                // Clear the heatmap
+                // Clear the heatmap (this will clean up the hidden canvas)
                 mouseview.clearHeatMap();
                 
                 return {
