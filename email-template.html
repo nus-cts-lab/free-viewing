@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+  <html>
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New Experiment Completion</title>
+  </head>
+  <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+
+      <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h2 style="color: #2c3e50; margin-top: 0;">🔬 New Experiment Completion</h2>
+          <p style="font-size: 16px; margin-bottom: 0;">A participant has completed the free viewing experiment.</p>
+      </div>
+
+      <div style="background-color: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #495057; margin-top: 0; border-bottom: 2px solid #007bff; padding-bottom: 10px;">📋 Participant Information</h3>
+
+          <table style="width: 100%; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                  <td style="padding: 8px 0; font-weight: bold; width: 40%;">Participant ID:</td>
+                  <td style="padding: 8px 0;">{{participant_id}}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                  <td style="padding: 8px 0; font-weight: bold;">Email:</td>
+                  <td style="padding: 8px 0;">{{participant_email}}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                  <td style="padding: 8px 0; font-weight: bold;">Session:</td>
+                  <td style="padding: 8px 0;">{{session}}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                  <td style="padding: 8px 0; font-weight: bold;">Completion Date:</td>
+                  <td style="padding: 8px 0;">{{completion_date}}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                  <td style="padding: 8px 0; font-weight: bold;">Completion Time:</td>
+                  <td style="padding: 8px 0;">{{completion_time}}</td>
+              </tr>
+          </table>
+      </div>
+
+      <div style="background-color: white; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #495057; margin-top: 0; border-bottom: 2px solid #28a745; padding-bottom: 10px;">🖥️ Technical Information</h3>
+
+          <table style="width: 100%; border-collapse: collapse;">
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                  <td style="padding: 8px 0; font-weight: bold; width: 40%;">Browser Info:</td>
+                  <td style="padding: 8px 0; font-size: 14px;">{{browser_info}}</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #e9ecef;">
+                  <td style="padding: 8px 0; font-weight: bold;">Screen Resolution:</td>
+                  <td style="padding: 8px 0;">{{screen_resolution}}</td>
+              </tr>
+          </table>
+      </div>
+
+      <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+          <h3 style="color: #856404; margin-top: 0;">⚠️ Action Required</h3>
+          <p style="margin-bottom: 15px; font-size: 16px;">{{download_message}}</p>
+
+          <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+              <p style="margin: 0;"><strong>Data Expiry:</strong> {{expiry_date}}</p>
+          </div>
+
+          <a href="{{admin_url}}" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: 
+  none; border-radius: 5px; font-weight: bold;">
+              🔗 Access Admin Dashboard
+          </a>
+      </div>
+
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #6c757d;">
+          <p style="margin: 0; font-size: 14px; color: #6c757d;">
+              This is an automated notification from the Free-Viewing Experiment system.
+          </p>
+      </div>
+
+  </body>
+  </html>

@@ -505,7 +505,11 @@ class AdminManager {
                 mouseData: data.mouse_data,
                 totalTrials: data.total_trials,
                 totalMousePoints: data.total_mouse_points,
-                dataSize: data.data_size
+                dataSize: data.data_size,
+                filesStored: data.files_stored || false,
+                csvTrialPath: data.csv_trial_path,
+                csvMousePath: data.csv_mouse_path,
+                heatmapZipPath: data.heatmap_zip_path
             };
             
         } catch (error) {
