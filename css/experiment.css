@@ -300,8 +300,8 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 /* Stimulus Images */
 .stimulus-image {
     position: absolute;
-    max-width: 380px;
-    max-height: 260px;
+    max-width: min(380px, 25vw);
+    max-height: min(260px, 20vh);
     width: auto;
     height: auto;
     object-fit: contain;
@@ -311,9 +311,9 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     display: none;
     background-color: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
-    padding: 8px;
+    padding: 6px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    margin: 10px;
+    margin: 5px;
     filter: blur(8px);
 }
 
@@ -477,8 +477,8 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 /* Responsive Design */
 @media (max-width: 1200px) {
     .stimulus-image {
-        max-width: 300px;
-        max-height: 210px;
+        max-width: min(300px, 24vw);
+        max-height: min(210px, 18vh);
     }
     
     h1 {
@@ -497,8 +497,8 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     }
     
     .stimulus-image {
-        max-width: 220px;
-        max-height: 150px;
+        max-width: min(220px, 22vw);
+        max-height: min(150px, 16vh);
         padding: 3px;
     }
     
