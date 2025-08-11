@@ -262,19 +262,27 @@ class AdminManager {
                     <td style="padding: 12px;">${this.formatDate(participant.completedAt)}</td>
                     <td style="padding: 12px; color: ${expiryColor}; font-weight: bold;">${expiryText}</td>
                     <td style="padding: 12px;">${participant.totalTrials}</td>
-                    <td style="padding: 12px;">
-                        <button onclick="adminManager.downloadParticipantCSV('${participant.participantId}')" 
-                                class="secondary-button" style="margin: 2px; padding: 8px 12px; font-size: 0.8em;">
-                            📄 CSV
-                        </button>
-                        <button onclick="adminManager.downloadParticipantHeatmaps('${participant.participantId}')" 
-                                class="secondary-button" style="margin: 2px; padding: 8px 12px; font-size: 0.8em;">
-                            🔥 Heatmaps
-                        </button>
-                        <button onclick="adminManager.deleteParticipantData('${participant.participantId}')" 
-                                class="secondary-button" style="margin: 2px; padding: 8px 12px; font-size: 0.8em; background: #d32f2f;">
-                            🗑️ Delete
-                        </button>
+                    <td style="padding: 8px;">
+                        <div style="display: flex; gap: 4px; justify-content: flex-start; flex-wrap: nowrap;">
+                            <button onclick="adminManager.downloadParticipantCSV('${participant.participantId}')" 
+                                    class="admin-action-btn csv-btn" 
+                                    title="Download CSV files"
+                                    style="background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3); color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.2s ease;">
+                                📊 CSV
+                            </button>
+                            <button onclick="adminManager.downloadParticipantHeatmaps('${participant.participantId}')" 
+                                    class="admin-action-btn heatmap-btn" 
+                                    title="Download heatmap files"
+                                    style="background: rgba(255,152,0,0.15); border: 1px solid rgba(255,152,0,0.3); color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.2s ease;">
+                                🔥 Maps
+                            </button>
+                            <button onclick="adminManager.deleteParticipantData('${participant.participantId}')" 
+                                    class="admin-action-btn delete-btn" 
+                                    title="Delete all participant data"
+                                    style="background: rgba(211,47,47,0.2); border: 1px solid rgba(211,47,47,0.4); color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; transition: all 0.2s ease;">
+                                🗑️
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;

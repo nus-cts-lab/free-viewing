@@ -257,25 +257,27 @@
                     <button id="admin-logout" class="secondary-button">Logout</button>
                 </div>
                 
-                <div id="storage-overview" style="margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.1); border-radius: 10px;">
-                    <h3>Storage Overview</h3>
+                <div id="storage-overview" style="margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;">
+                    <h3 style="margin-bottom: 15px; font-size: 18px; color: rgba(255,255,255,0.9);">📊 Storage Overview</h3>
                     <div id="storage-stats">
-                        <p>Loading storage information...</p>
+                        <p style="color: rgba(255,255,255,0.7);">Loading storage information...</p>
                     </div>
                 </div>
                 
                 <div id="participant-data-list">
-                    <h3>Participant Data</h3>
+                    <h3 style="margin-bottom: 15px; font-size: 18px; color: rgba(255,255,255,0.9);">👥 Participant Data</h3>
                     <div id="data-list-container">
-                        <p>Loading participant data...</p>
+                        <p style="color: rgba(255,255,255,0.7);">Loading participant data...</p>
                     </div>
                 </div>
                 
-                <div style="margin-top: 30px; padding: 20px; background: rgba(255,0,0,0.1); border-radius: 10px;">
-                    <h4>⚠️ Data Management</h4>
-                    <p>Data is automatically deleted after 7 days. Use the cleanup button to remove expired data manually.</p>
-                    <button id="cleanup-expired-data" class="secondary-button">Remove Expired Data</button>
-                    <button id="clear-all-data" class="secondary-button" style="margin-left: 10px; background: #d32f2f;">Clear All Data</button>
+                <div style="margin-top: 30px; padding: 20px; background: rgba(255,193,7,0.08); border: 1px solid rgba(255,193,7,0.2); border-radius: 8px;">
+                    <h4 style="color: #FFC107; margin-bottom: 10px;">⚠️ Data Management</h4>
+                    <p style="color: rgba(255,255,255,0.8); margin-bottom: 15px; font-size: 14px;">Data is automatically deleted after 7 days. Use the cleanup button to remove expired data manually.</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button id="cleanup-expired-data" class="secondary-button" style="background: rgba(255,193,7,0.2); border-color: rgba(255,193,7,0.4);">🧹 Remove Expired</button>
+                        <button id="clear-all-data" class="secondary-button" style="background: rgba(211,47,47,0.3); border-color: rgba(211,47,47,0.5);">🗑️ Clear All Data</button>
+                    </div>
                 </div>
             </div>
         </div>

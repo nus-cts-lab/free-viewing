@@ -619,23 +619,51 @@ body.experiment-active .center-button * {
 .admin-table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 15px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .admin-table th, .admin-table td {
     padding: 12px;
     text-align: left;
-    border-bottom: 1px solid #444;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    vertical-align: middle;
 }
 
 .admin-table th {
-    background: rgba(255,255,255,0.1);
-    border-bottom: 2px solid #666;
+    background: rgba(255,255,255,0.08);
+    border-bottom: 2px solid rgba(255,255,255,0.15);
     font-weight: bold;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.9);
 }
 
 .admin-table tr:hover {
     background: rgba(255,255,255,0.05);
+}
+
+/* Admin action buttons */
+.admin-action-btn:hover.csv-btn {
+    background: rgba(76,175,80,0.3) !important;
+    border-color: rgba(76,175,80,0.6) !important;
+    transform: translateY(-1px);
+}
+
+.admin-action-btn:hover.heatmap-btn {
+    background: rgba(255,152,0,0.3) !important;
+    border-color: rgba(255,152,0,0.6) !important;
+    transform: translateY(-1px);
+}
+
+.admin-action-btn:hover.delete-btn {
+    background: rgba(211,47,47,0.4) !important;
+    border-color: rgba(211,47,47,0.7) !important;
+    transform: translateY(-1px);
 }
 
 .admin-stats-grid {
