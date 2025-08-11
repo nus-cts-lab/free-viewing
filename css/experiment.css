@@ -433,6 +433,18 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
     margin: 10px;
 }
 
+/* Enable scrolling for admin dashboard */
+#admin-dashboard-screen {
+    overflow-y: auto;
+    align-items: flex-start;
+}
+
+#admin-dashboard-screen .content-wrapper {
+    max-height: none;
+    margin: 20px auto;
+    padding: 20px;
+}
+
 /* Hide all download controls and heatmap displays during processing */
 #processing-screen #download-buttons,
 #processing-screen button[id*="download"],
